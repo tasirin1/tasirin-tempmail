@@ -4,6 +4,32 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-11-25
+
+### Added
+
+- Multi-layanan: kini ada 5 layanan email sekali pakai yang bisa
+  dipilih di kartu alamat — tempmail.plus (bawaan), tempmail.is,
+  tempmail.now, tempmail.net, dan tempail.com. Semua API dipetakan
+  dan diuji langsung dengan email uji beneran sebelum dibangun.
+- tempmail.is mendukung alamat nama sendiri (domain vgmale.com,
+  ogzmail.com, ozvmail.com) seperti tempmail.plus.
+- Layanan berbasis sesi (tempmail.now, tempmail.net, tempail.com)
+  memakai alamat acak dari server; blok "Pakai nama sendiri"
+  disembunyikan untuk layanan yang tidak mendukungnya.
+- Alamat tempmail.now yang kedaluwarsa (±30 menit) otomatis
+  mengikuti alamat baru yang dilaporkan server.
+
+### Notes
+
+- Keluarga tempmail.net/tempail.com tidak menampilkan judul email
+  sama sekali dari servernya; deteksi kode verifikasi tetap jalan
+  dari isi email.
+- Kedatangan email uji ke tempmail.now dan tempmail.net belum
+  terkonfirmasi saat rilis (inbox tetap kosong selama pengujian);
+  parser keduanya dibangun dari format yang terbukti di situs
+  yang sama/keluarga yang sama dan perlu verifikasi pemakaian nyata.
+
 ## [0.6.3] - 2026-11-25
 
 ### Fixed
