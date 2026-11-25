@@ -4,6 +4,42 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.10.0] - 2026-11-25
+
+### Added
+
+- Layanan kelima: **DropMail** (dropmail.me) — dipilih owner dari
+  saran yang diverifikasi langsung. API GraphQL berbasis token +
+  sesi: token gratis dibuat lewat API tanpa akun (umur 1 hari —
+  umur panjang ditolak gerbang captcha/credits, jadi token mati
+  dibuat ulang diam-diam), sesi ±10 menit yang diperpanjang tiap
+  akses dan dipulihkan otomatis bila mati, dengan alamat baru
+  dilaporkan ke UI. Nama alamat ditentukan server (domain
+  berganti-ganti, mis. emlpro.com / dropmail.me / 10mail.org);
+  isi email ikut di daftar sebagai teks polos. HttpSesi kini
+  punya postJson — pembuat token dan GraphQL DropMail menolak
+  body form (HTTP 400).
+- Layanan keenam: **Mailnesia** (mailnesia.com) — dipilih owner
+  dari saran yang diverifikasi langsung. Kotak masuk publik
+  menurut nama yang dibaca lewat feed RSS: tiap item membawa
+  subjek + pengirim, isi teks lengkap, tanggal, dan id pesan,
+  jadi tidak ada panggilan detail terpisah. Alamat nama sendiri
+  @mailnesia.com (satu domain).
+- Keduanya terbukti ujung-ke-ujung sebelum dirilis: email uji
+  berkode tiba, terbaca, dan kodenya terdeteksi dari subjek
+  maupun isi.
+
+### Tests
+
+- DropMailProviderTest baru: daftar domain kosong, penolakan
+  nama sendiri, dan format waktu ISO GraphQL (termasuk stempel
+  email uji sungguhan).
+- MailnesiaProviderTest baru: daftar domain, komposisi alamat
+  acak/custom, penolakan domain asing, format waktu RSS, dan
+  pengurai RSS atas salinan persis feed email uji sungguhan
+  (termasuk subjek yang memuat pemisah dan id non-angka yang
+  jatuh ke id sintetis).
+
 ## [0.9.0] - 2026-11-25
 
 ### Added
