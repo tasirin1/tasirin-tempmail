@@ -146,13 +146,13 @@ class NowProvider : MailProvider {
         // lain, dan respons rusak dilempar apa adanya TANPA merusak
         // sesi: pemanggil menampilkan error dan mencoba lagi nanti.
         try {
-            ambilInboxSekali()
+            ambilInboxSekali(alamat, dariPemulihan = false)
         } catch (e: IllegalStateException) {
             val kode = Regex("HTTP (\\d+)").find(e.message ?: "")
                 ?.groupValues?.get(1)?.toIntOrNull()
             if (kode == 401 || kode == 403 || kode == 404) {
                 resetSesi()
-                val hasilBaru = ambilInboxSekali()
+                val hasilBaru = ambilInboxSekali(alamat, dariPemulihan = true)
                 // Alamat sesi baru WAJIB dilaporkan: tanpa ini UI tetap
                 // menampilkan alamat lama yang mati dan polling
                 // berikutnya kena penjaga alamat basi selamanya (#80).
@@ -167,8 +167,16 @@ class NowProvider : MailProvider {
     }
 
     // Wajib dipanggil sambil memegang kunciSesi.
-    private fun ambilInboxSekali(): List<MailItem> {
+    private fun ambilInboxSekali(alamatDiminta: String, dariPemulihan: Boolean): List<MailItem> {
         pastikanSesi()
+        // Penjaga alamat basi, babak kedua (issue #91): sama seperti di
+        // IsProvider — sesi baru yang dibuat untuk panggilan berlabel
+        // alamat lama tidak boleh menyerahkan inbox alamat barunya.
+        if (!dariPemulihan && alamatDiminta.isNotBlank() && alamatAktif.isNotBlank() &&
+            alamatAktif != alamatDiminta
+        ) {
+            return emptyList()
+        }
         val hasil = http.get("$BASE/fetch_emails")
         if (hasil.kode !in 200..299) throw IllegalStateException("tempmail.now: HTTP ${hasil.kode}")
         val json = uraiJson(hasil.body)

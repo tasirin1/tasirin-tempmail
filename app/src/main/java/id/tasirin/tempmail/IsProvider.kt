@@ -190,11 +190,11 @@ class IsProvider : MailProvider {
             // Kegagalan jaringan (bukan IllegalStateException HTTP)
             // dilempar apa adanya tanpa merusak klien.
             try {
-                ambilInboxSekali()
+                ambilInboxSekali(alamat, dariPemulihan = false)
             } catch (e: IllegalStateException) {
                 if (e.message?.contains("HTTP ") == true) {
                     resetKlien()
-                    val hasilBaru = ambilInboxSekali()
+                    val hasilBaru = ambilInboxSekali(alamat, dariPemulihan = true)
                     if (alamatAktif.isNotBlank() && alamatAktif != alamat) {
                         alamatDariServer = alamatAktif
                     }
@@ -207,8 +207,19 @@ class IsProvider : MailProvider {
     }
 
     // Wajib dipanggil sambil memegang kunciSesi.
-    private fun ambilInboxSekali(): List<MailItem> {
+    private fun ambilInboxSekali(alamatDiminta: String, dariPemulihan: Boolean): List<MailItem> {
         pastikanKlien()
+        // Penjaga alamat basi, babak kedua (issue #91): penjaga di
+        // fetchInbox lolos bila alamatAktif tadi masih kosong — sesi
+        // baru yang baru saja dibuat bisa beralamat BERBEDA dari yang
+        // diminta, dan inbox-nya tidak boleh diserahkan untuk label
+        // alamat lama. Jalur pemulihan dikecualikan: alamat barunya
+        // memang dilaporkan lewat alamatDariServer.
+        if (!dariPemulihan && alamatDiminta.isNotBlank() && alamatAktif.isNotBlank() &&
+            alamatAktif != alamatDiminta
+        ) {
+            return emptyList()
+        }
         val json = post(
             "/messages",
             listOf(
