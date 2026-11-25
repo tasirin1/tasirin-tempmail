@@ -133,6 +133,24 @@ class IsProvider : MailProvider {
         catatEmail(json.getJSONObject("email"))
     }
 
+    // Alamat hasil pemulihan klien (issue #82): dilaporkan ke UI lewat
+    // alamatServer() supaya layar tidak terus menampilkan alamat mati.
+    @Volatile
+    private var alamatDariServer: String? = null
+
+    // Buang seluruh keadaan klien supaya klien baru bisa dibuat. Tanpa
+    // jalur ini, uuid yang ditolak server membuat layanan mati total
+    // sampai proses aplikasi dibunuh (issue #82). Wajib dipanggil
+    // sambil memegang kunciSesi.
+    private fun resetKlien() {
+        uuidKlien = ""
+        idEmailAktif = 0
+        alamatAktif = ""
+        idTerbesar = 0
+        daftarPesan.clear()
+        isiTerakhir.kosongkan()
+    }
+
     override fun fetchInbox(alamat: String): List<MailItem> = synchronized(kunciSesi) {
         // Parameter alamat DULU diabaikan total (issue #44): hasil selalu
         // inbox alamat aktif provider. Kini panggilan untuk alamat yang
@@ -142,6 +160,31 @@ class IsProvider : MailProvider {
         if (alamat.isNotBlank() && alamatAktif.isNotBlank() && alamat != alamatAktif) {
             emptyList()
         } else {
+            // Satu kali pemulihan klien: penolakan HTTP dari server bisa
+            // berarti uuid klien tidak sah lagi → buang klien, buat baru,
+            // coba sekali lagi, dan laporkan alamat barunya ke UI
+            // (issue #82; pola yang sama dengan pemulihan #80).
+            // Kegagalan jaringan (bukan IllegalStateException HTTP)
+            // dilempar apa adanya tanpa merusak klien.
+            try {
+                ambilInboxSekali()
+            } catch (e: IllegalStateException) {
+                if (e.message?.contains("HTTP ") == true) {
+                    resetKlien()
+                    val hasilBaru = ambilInboxSekali()
+                    if (alamatAktif.isNotBlank() && alamatAktif != alamat) {
+                        alamatDariServer = alamatAktif
+                    }
+                    hasilBaru
+                } else {
+                    throw e
+                }
+            }
+        }
+    }
+
+    // Wajib dipanggil sambil memegang kunciSesi.
+    private fun ambilInboxSekali(): List<MailItem> {
         pastikanKlien()
         val json = post(
             "/messages",
@@ -185,9 +228,10 @@ class IsProvider : MailProvider {
         }
         // Pesan baru dari server selalu lebih baru dari yang sudah ada.
         daftarPesan.addAll(0, baru)
-        ArrayList(daftarPesan)
-        }
+        return ArrayList(daftarPesan)
     }
+
+    override fun alamatServer(): String? = alamatDariServer
 
     override fun alamatAktif(): String? = alamatAktif.ifBlank { null }
 
