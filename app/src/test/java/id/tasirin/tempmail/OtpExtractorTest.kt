@@ -192,6 +192,12 @@ class OtpExtractorTest {
             "445566",
             OtpExtractor.extract("Kode pos dicatat\nGunakan 445566 untuk masuk")
         )
+        // Issue #147: label menutup barisnya sendiri, kalimat OTP
+        // di baris berikut — huruf sesudah baris baru ikut memutus.
+        assertEquals(
+            "445566",
+            OtpExtractor.extract("Kode pos:\nGunakan 445566 untuk masuk")
+        )
     }
 
     @Test
