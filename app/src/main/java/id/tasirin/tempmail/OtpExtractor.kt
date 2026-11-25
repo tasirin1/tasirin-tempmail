@@ -186,7 +186,17 @@ object OtpExtractor {
                     // BUKAN batas (issue #145).
                     if (kata.length < 3 || kata in singkatanTitik) continue
                     var k = i + 1
-                    while (k < teks.length && (teks[k] == ' ' || teks[k] == '\t')) k++
+                    // Rentetan titik (elipsis) dilompati: kata yang
+                    // dinilai tetap kata sebelum titik pertama, dan
+                    // karakter penentunya yang sesudah elipsis
+                    // (issue #156). Kasus #145 tetap aman karena di
+                    // sana segmennya dimulai dari frasa — katanya
+                    // kosong dan titiknya dilewati di atas.
+                    while (k < teks.length &&
+                        (teks[k] == ' ' || teks[k] == '\t' || teks[k] == '.')
+                    ) {
+                        k++
+                    }
                     if (k >= teks.length) return true
                     val berikut = teks[k]
                     if (berikut == '\n' || berikut.isUpperCase() || berikut.isDigit()) {

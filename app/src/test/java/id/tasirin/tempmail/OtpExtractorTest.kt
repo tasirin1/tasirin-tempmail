@@ -208,6 +208,16 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun elipsisSesudahKataPenutupTetapBatas() {
+        // Issue #156: kalimat berakhir elipsis tetap memutus
+        // ikatan — karakter penentunya sesudah rentetan titik.
+        assertEquals(
+            "445566",
+            OtpExtractor.extract("Kode pos tercatat... Gunakan 445566 untuk masuk")
+        )
+    }
+
+    @Test
     fun kalimatBaruHurufKecilSesudahKataPanjangAdalahBatas() {
         // Issue #150: gaya informal — kalimat OTP berhuruf kecil
         // sesudah titik, kata penutup sebelumnya panjang.
