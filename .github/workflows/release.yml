@@ -41,10 +41,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          APKVER="$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)"
           if [ "${{ github.ref_type }}" = "tag" ]; then
             VER="${GITHUB_REF_NAME#v}"
+            if [ "$VER" != "$APKVER" ]; then
+              echo "::error::Tag v$VER tidak cocok dengan versionName $APKVER di build.gradle.kts"
+              exit 1
+            fi
           else
-            VER="0.1.0"
+            VER="$APKVER"
           fi
           cp app/build/outputs/apk/release/app-release.apk "tasirin-tempmail-v${VER}.apk"
           cat > /tmp/release-notes.md << 'EOF'
