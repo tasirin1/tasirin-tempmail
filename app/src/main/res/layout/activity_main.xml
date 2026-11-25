@@ -116,8 +116,7 @@
         </LinearLayout>
 
         <!-- Blok nama sendiri: disembunyikan untuk layanan yang tidak
-             mendukung nama pilihan pengguna (tempmail.now, tempmail.net,
-             tempail.com). -->
+             mendukung nama pilihan pengguna (tempmail.now). -->
         <LinearLayout
             android:id="@+id/llNamaSendiri"
             android:layout_width="match_parent"

@@ -27,13 +27,12 @@ import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
-// Layar utama: alamat email sekali pakai (tempmail.plus) + kotak masuk
-// yang dicek otomatis + deteksi kode verifikasi siap salin.
+// Layar utama: alamat email sekali pakai (bisa pilih layanan) + kotak
+// masuk yang dicek otomatis + deteksi kode verifikasi siap salin.
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tvEmail: TextView
     private lateinit var tvSubjudul: TextView
-    private lateinit var spinnerLayanan: Spinner
     private lateinit var llNamaSendiri: LinearLayout
     private lateinit var spinnerDomain: Spinner
     private lateinit var etNama: EditText
@@ -120,7 +119,7 @@ class MainActivity : AppCompatActivity() {
 
         tvEmail = findViewById(R.id.tvEmail)
         tvSubjudul = findViewById(R.id.tvSubjudul)
-        spinnerLayanan = findViewById(R.id.spinnerLayanan)
+        val spinnerLayanan = findViewById<Spinner>(R.id.spinnerLayanan)
         llNamaSendiri = findViewById(R.id.llNamaSendiri)
         spinnerDomain = findViewById(R.id.spinnerDomain)
         etNama = findViewById(R.id.etNama)
