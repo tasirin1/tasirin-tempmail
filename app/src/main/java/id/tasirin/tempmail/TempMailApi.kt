@@ -120,6 +120,11 @@ object TempMailApi {
     private val reSpasi = Regex("[ \\t]+")
     private val reBaris3 = Regex("\n{3,}")
 
+    private fun titikKode(cp: Int?, asal: String): String {
+        if (cp == null || cp < 0 || cp > 0x10FFFF || cp in 0xD800..0xDFFF) return asal
+        return String(Character.toChars(cp))
+    }
+
     // Ubah HTML sederhana jadi teks polos: buang blok script/style beserta
     // isinya (issue #13), buang tag, rapikan entitas umum + entitas numerik.
     fun htmlToText(html: String): String {
@@ -127,8 +132,11 @@ object TempMailApi {
         t = t.replace(reBr, "\n")
         t = t.replace(reTutupP, "\n\n")
         t = t.replace(reTag, "")
-        t = t.replace(reEntitasAngka) { it.groupValues[1].toInt().toChar().toString() }
-        t = t.replace(reEntitasHex) { it.groupValues[1].toInt(16).toChar().toString() }
+        // Entitas numerik diterjemahkan per titik kode penuh (emoji utuh),
+        // dan nilai yang mustahil dibiarkan apa adanya — tidak melempar,
+        // tidak terpotong 16 bit (issue #27).
+        t = t.replace(reEntitasAngka) { m -> titikKode(m.groupValues[1].toIntOrNull(), m.value) }
+        t = t.replace(reEntitasHex) { m -> titikKode(m.groupValues[1].toIntOrNull(16), m.value) }
         t = t.replace("&nbsp;", " ")
             .replace("&amp;", "&")
             .replace("&lt;", "<")

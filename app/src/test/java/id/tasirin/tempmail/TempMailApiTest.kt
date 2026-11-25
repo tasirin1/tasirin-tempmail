@@ -20,6 +20,14 @@ class TempMailApiTest {
     }
 
     @Test
+    fun entitasEmojiUtuhDanEntitasMustahilAman() {
+        assertEquals("\uD83D\uDE00", TempMailApi.htmlToText("&#128512;"))
+        assertEquals("\uD83D\uDE00", TempMailApi.htmlToText("&#x1F600;"))
+        // Tidak melempar; dibiarkan apa adanya (issue #27).
+        assertEquals("&#999999999999;", TempMailApi.htmlToText("&#999999999999;"))
+    }
+
+    @Test
     fun entitasUmumDanHexDiterjemahkan() {
         assertEquals(
             "\"Halo\" & AB",
