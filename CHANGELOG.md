@@ -4,6 +4,14 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.6.2] - 2026-11-25
+
+### Fixed
+
+- Ikon status bar (jam, sinyal, baterai) kini gelap sehingga terbaca
+  jelas di atas latar terang aplikasi — sebelumnya putih dan nyaris
+  tidak terlihat (terlihat pada screenshot uji perangkat v0.6.1).
+
 ## [0.6.1] - 2026-11-25
 
 ### Fixed
