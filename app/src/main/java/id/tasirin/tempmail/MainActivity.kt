@@ -55,6 +55,9 @@ class MainActivity : AppCompatActivity() {
     private val executorAksi = Executors.newSingleThreadExecutor()
     private val sedangCek = AtomicBoolean(false)
     private val sedangBuka = AtomicBoolean(false)
+    // Permintaan refresh yang tiba saat refresh lain sedang terbang
+    // diingat di sini, bukan ditelan CAS sedangCek (issue #94).
+    private val mintaRefreshLagi = AtomicBoolean(false)
 
     // Dialog isi email yang sedang tampil (ditutup di onDestroy).
     private var dialogDetail: AlertDialog? = null
@@ -461,7 +464,13 @@ class MainActivity : AppCompatActivity() {
         // dengan alamat kosong hanya membuat sesi yatim di sisi
         // provider yang tidak pernah ditampilkan (issue #49).
         if (alamatSekarang.isBlank()) return
-        if (!sedangCek.compareAndSet(false, true)) return
+        if (!sedangCek.compareAndSet(false, true)) {
+            // Sedang ada refresh terbang (kemungkinan untuk alamat
+            // lama): ingat permintaan ini supaya refresh alamat
+            // sekarang jalan begitu yang terbang selesai (issue #94).
+            mintaRefreshLagi.set(true)
+            return
+        }
         val email = alamatSekarang
         val gen = generasiAlamat
         val p = providerAktif
@@ -471,6 +480,12 @@ class MainActivity : AppCompatActivity() {
             // Activity sedang dihancurkan — jangan crash, bebaskan penanda.
             sedangCek.set(false)
         }
+    }
+
+    // Jalankan refresh yang tertunda selama refresh sebelumnya terbang
+    // (issue #94). Dipanggil sesudah sedangCek dibebaskan.
+    private fun teruskanRefreshTertunda() {
+        if (mintaRefreshLagi.getAndSet(false)) refreshInbox()
     }
 
     private fun jalankanRefresh(email: String, gen: Int, p: MailProvider) {
@@ -592,6 +607,7 @@ class MainActivity : AppCompatActivity() {
                 val kodeFinal = kodeBaru
                 runOnUiThread {
                     sedangCek.set(false)
+                    teruskanRefreshTertunda()
                     if (email != alamatSekarang || p !== providerAktif) return@runOnUiThread
                     // Server melaporkan alamat lain (mis. alamat lama
                     // kedaluwarsa dan diputar server): ikuti server.
@@ -615,6 +631,7 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 runOnUiThread {
                     sedangCek.set(false)
+                    teruskanRefreshTertunda()
                     if (email != alamatSekarang) return@runOnUiThread
                     jedaPollingMs = (jedaPollingMs * 2).coerceAtMost(60000L)
                     tvStatus.text = "Gagal cek inbox: ${e.message ?: "jaringan bermasalah"}"
@@ -623,7 +640,10 @@ class MainActivity : AppCompatActivity() {
                 // Error (bukan Exception — mis. kehabisan memori saat
                 // membaca respons raksasa) tidak boleh membuat penanda
                 // macet true dan polling mati diam-diam (issue #68).
-                runOnUiThread { sedangCek.set(false) }
+                runOnUiThread {
+                    sedangCek.set(false)
+                    teruskanRefreshTertunda()
+                }
             }
     }
 
