@@ -147,12 +147,20 @@ object OtpExtractor {
     // kemarin memutus ikatan label dan kode pos lolos sebagai OTP).
     private val singkatanTitik = setOf(
         "jl", "no", "hal", "dr", "drs", "h", "hj", "sdr", "sdri",
-        "prof", "ir", "ust"
+        "prof", "ir", "ust", "dsb", "dll", "tsb", "tgl", "vol",
+        "pt", "an", "up", "dst", "sda"
     )
 
     // Ada batas kalimat sungguhan di teks ini? '!' dan '?' selalu
-    // batas; '.' hanya bila kata sebelumnya bukan singkatan baku
-    // dan bukan inisial satu huruf.
+    // batas. '.' hanya batas bila memenuhi SEMUA syarat struktural
+    // (issue #144 — daftar singkatan tertutup sendirian selalu
+    // menyisakan singkatan di luar daftar seperti dsb./tgl./PT.):
+    // kata sebelumnya minimal 4 huruf dan bukan singkatan, DAN
+    // karakter berikutnya (sesudah spasi) huruf kapital, angka,
+    // baris baru, atau akhir teks. Singkatan umumnya pendek
+    // dan/atau diikuti kata kecil — kalimat sungguhan yang
+    // berakhir dengan kata pendek (<4 huruf) adalah sisa yang
+    // diterima.
     private fun adaBatasKalimat(teks: String): Boolean {
         for (i in teks.indices) {
             when (teks[i]) {
@@ -169,7 +177,14 @@ object OtpExtractor {
                     // frasa/tanda lain ("Kode pos. 40286", elipsis):
                     // tidak ada kalimat yang diakhiri di sana —
                     // BUKAN batas (issue #145).
-                    if (kata.length > 1 && kata !in singkatanTitik) return true
+                    if (kata.length < 4 || kata in singkatanTitik) continue
+                    var k = i + 1
+                    while (k < teks.length && (teks[k] == ' ' || teks[k] == '\t')) k++
+                    if (k >= teks.length) return true
+                    val berikut = teks[k]
+                    if (berikut == '\n' || berikut.isUpperCase() || berikut.isDigit()) {
+                        return true
+                    }
                 }
             }
         }

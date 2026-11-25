@@ -185,6 +185,15 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun singkatanDiLuarDaftarUmumBukanBatas() {
+        // Issue #144: aturan struktural menangkap singkatan yang
+        // tidak terdaftar satu per satu.
+        assertNull(OtpExtractor.extract("Kode pos dsb. 40286"))
+        assertNull(OtpExtractor.extract("Kode pos dll. tercatat 123456"))
+        assertNull(OtpExtractor.extract("Kode pos PT. Maju adalah 123456"))
+    }
+
+    @Test
     fun titikMenempelSesudahFrasaBukanBatas() {
         // Issue #145: "Kode pos." / elipsis tidak memutus ikatan.
         assertNull(OtpExtractor.extract("Kode pos. 40286"))
