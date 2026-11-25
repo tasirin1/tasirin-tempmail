@@ -333,6 +333,8 @@ class MainActivity : AppCompatActivity() {
         tokenBuat++
         sedangBuat = false
         cobaBuatLagi = 0
+        // Retry pembuatan milik layanan lama dibatalkan (issue #114).
+        batalkanRetryBuat()
         synchronized(idSudahDicek) { idSudahDicek.clear() }
         synchronized(gagalAmbilIsi) { gagalAmbilIsi.clear() }
         sapuAwalSelesai = false
@@ -384,6 +386,29 @@ class MainActivity : AppCompatActivity() {
     private var tokenBuat = 0
     // Jumlah percobaan ulang otomatis pembuatan alamat awal (issue #98).
     private var cobaBuatLagi = 0
+    // Percobaan ulang sebagai Runnable bernama (bukan lambda anonim)
+    // supaya bisa DIBATALKAN saat layanan berganti / Activity hancur —
+    // lambda anonim kemarin bisa menyala untuk layanan yang salah
+    // (issue #114). Bendera terjadwal mencegah antrean ganda.
+    private var retryBuatTerjadwal = false
+    private val retryBuatRunnable = Runnable {
+        retryBuatTerjadwal = false
+        if (alamatSekarang.isBlank() && !isFinishing && !isDestroyed) {
+            buatAlamatBaru(acak = true, pesanSalin = null)
+        }
+    }
+
+    private fun jadwalkanRetryBuat() {
+        if (cobaBuatLagi >= 3 || retryBuatTerjadwal) return
+        cobaBuatLagi++
+        retryBuatTerjadwal = true
+        handler.postDelayed(retryBuatRunnable, 5000L)
+    }
+
+    private fun batalkanRetryBuat() {
+        handler.removeCallbacks(retryBuatRunnable)
+        retryBuatTerjadwal = false
+    }
 
     // Buat alamat (acak/custom) di thread latar — layanan berbasis sesi
     // butuh jaringan. Hasil basi (sudah ada permintaan lebih baru atau
@@ -429,14 +454,7 @@ class MainActivity : AppCompatActivity() {
                             // selamanya sampai pengguna bertindak —
                             // penjaga alamat kosong membuat pollRunnable
                             // tidak melakukan apa pun.
-                            if (cobaBuatLagi < 3) {
-                                cobaBuatLagi++
-                                handler.postDelayed({
-                                    if (alamatSekarang.isBlank() && !isFinishing && !isDestroyed) {
-                                        buatAlamatBaru(acak = true, pesanSalin = null)
-                                    }
-                                }, 5000L)
-                            }
+                            jadwalkanRetryBuat()
                         }
                         toast("Gagal membuat alamat: ${e.message ?: "jaringan bermasalah"}")
                     }
@@ -464,6 +482,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        batalkanRetryBuat()
         dialogDetail?.dismiss()
         dialogDetail = null
         executor.shutdownNow()
