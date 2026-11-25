@@ -592,7 +592,11 @@ class MainActivity : AppCompatActivity() {
     private fun teruskanRefreshTertunda(jedaMs: Long = 0L) {
         if (!mintaRefreshLagi.getAndSet(false)) return
         if (jedaMs <= 0L) {
-            refreshInbox()
+            // Cabang segera ikut digerbang polling (issue #130):
+            // penyelesaian sukses/Throwable yang tiba sesudah onPause
+            // tidak boleh melahirkan refresh di latar — flag yang
+            // terkonsumsi di sini terserap rantai poll onResume.
+            if (polling) refreshInbox()
         } else if (!refreshTertundaTerjadwal && polling) {
             // Satu jadwal saja: permintaan tertunda berikutnya selama
             // jadwal ini menunggu terserap oleh penyegaran yang sama.
