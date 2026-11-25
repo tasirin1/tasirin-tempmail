@@ -197,6 +197,8 @@ class OtpExtractorTest {
         // Issue #127: -kau/-anda menempel juga.
         assertNull(OtpExtractor.extract("kode poskau 40115"))
         assertNull(OtpExtractor.extract("kode posanda 40115"))
+        // Issue #134: -na (Sunda) menempel juga.
+        assertNull(OtpExtractor.extract("kode posna 40115"))
     }
 
     @Test
