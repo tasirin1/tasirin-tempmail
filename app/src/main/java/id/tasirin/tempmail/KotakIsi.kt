@@ -15,8 +15,11 @@ class KotakIsi {
     operator fun get(id: String): MailDetail? = peta[id]
 
     // Ganti seluruh isi (provider yang mengambil daftar penuh).
+    // Di dalam monitor yang sama dengan taruh/buang: tanpa ini, taruh
+    // yang membaca peta lama bisa menuliskan gabungan basi SESUDAH
+    // gantiSemua/kosongkan — entri yang dibuang hidup lagi (issue #90).
     fun gantiSemua(baru: Map<String, MailDetail>) {
-        peta = baru
+        synchronized(this) { peta = baru }
     }
 
     // Tambahkan/gabung entri baru (provider delta: entri lama tetap).
@@ -30,6 +33,6 @@ class KotakIsi {
     }
 
     fun kosongkan() {
-        peta = emptyMap()
+        synchronized(this) { peta = emptyMap() }
     }
 }
