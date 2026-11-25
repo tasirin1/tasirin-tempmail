@@ -394,7 +394,7 @@ class MainActivity : AppCompatActivity() {
     private val retryBuatRunnable = Runnable {
         retryBuatTerjadwal = false
         if (alamatSekarang.isBlank() && !isFinishing && !isDestroyed) {
-            buatAlamatBaru(acak = true, pesanSalin = null)
+            buatAlamatBaru(acak = true, pesanSalin = null, otomatis = true)
         }
     }
 
@@ -416,7 +416,12 @@ class MainActivity : AppCompatActivity() {
     // ditolak penjaga (pembuatan lain sedang berjalan) supaya pemanggil
     // bisa memberi umpan balik — penolakan diam-diam membuat ketukan
     // Pakai menelan nama yang diketik pengguna (issue #84).
-    private fun buatAlamatBaru(acak: Boolean, namaBersih: String? = null, pesanSalin: String?): Boolean {
+    private fun buatAlamatBaru(
+        acak: Boolean,
+        namaBersih: String? = null,
+        pesanSalin: String?,
+        otomatis: Boolean = false
+    ): Boolean {
         if (sedangBuat) return false
         sedangBuat = true
         val token = ++tokenBuat
@@ -456,7 +461,14 @@ class MainActivity : AppCompatActivity() {
                             // tidak melakukan apa pun.
                             jadwalkanRetryBuat()
                         }
-                        toast("Gagal membuat alamat: ${e.message ?: "jaringan bermasalah"}")
+                        // Toast hanya untuk percobaan yang diminta
+                        // pengguna — retry otomatis berjalan diam-diam,
+                        // bukan toast yang sama sampai 4 kali (issue
+                        // #115). Status kegagalan tetap terlihat di
+                        // label alamat "(gagal menyiapkan alamat)".
+                        if (!otomatis) {
+                            toast("Gagal membuat alamat: ${e.message ?: "jaringan bermasalah"}")
+                        }
                     }
                 }
             }
