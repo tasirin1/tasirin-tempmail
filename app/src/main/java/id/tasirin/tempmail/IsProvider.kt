@@ -118,6 +118,16 @@ class IsProvider : MailProvider {
         return alamatAktif
     }
 
+    // Ambil objek email dari respons dengan pesan yang bisa dipahami —
+    // sisa jalur JSONException mentah dari sapuan #88 (issue #110).
+    private fun emailDari(json: JSONObject): JSONObject {
+        return try {
+            json.getJSONObject("email")
+        } catch (e: Exception) {
+            throw IllegalStateException("tempmail.is: respons tidak lengkap dari server")
+        }
+    }
+
     override fun domains(): List<String> = synchronized(kunciSesi) {
         pastikanKlien()
         if (daftarDomain.isEmpty()) {
@@ -125,9 +135,13 @@ class IsProvider : MailProvider {
             val arr = json.optJSONArray("domains")
             val hasil = ArrayList<Pair<Long, String>>()
             if (arr != null) {
-                for (i in 0 until arr.length()) {
-                    val d = arr.getJSONObject(i)
-                    hasil.add(d.getLong("id") to d.getString("name"))
+                try {
+                    for (i in 0 until arr.length()) {
+                        val d = arr.getJSONObject(i)
+                        hasil.add(d.getLong("id") to d.getString("name"))
+                    }
+                } catch (e: Exception) {
+                    throw IllegalStateException("tempmail.is: respons tidak lengkap dari server")
                 }
             }
             daftarDomain = hasil
@@ -143,7 +157,7 @@ class IsProvider : MailProvider {
             alamatAktif
         } else {
             val json = post("/email/random", listOf("uuid" to uuidKlien))
-            catatEmail(json.getJSONObject("email"))
+            catatEmail(emailDari(json))
         }
     }
 
@@ -157,7 +171,7 @@ class IsProvider : MailProvider {
             "/email/custom",
             listOf("uuid" to uuidKlien, "alias" to namaBersih, "domain_id" to domainId.toString())
         )
-        catatEmail(json.getJSONObject("email"))
+        catatEmail(emailDari(json))
     }
 
     // Alamat hasil pemulihan klien (issue #82): dilaporkan ke UI lewat
