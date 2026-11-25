@@ -96,7 +96,8 @@ object Layanan {
         IsProvider(),
         NowProvider(),
         KittenProvider(),
-        DropMailProvider()
+        DropMailProvider(),
+        MailnesiaProvider()
     )
 
     fun cari(id: String): MailProvider = semua.firstOrNull { it.id == id } ?: semua[0]
