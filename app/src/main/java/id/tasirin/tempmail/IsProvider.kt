@@ -105,6 +105,11 @@ class IsProvider : MailProvider {
         }
         idEmailAktif = idBaru
         alamatAktif = alamatBaru
+        // Alamat yang dicatat lewat jalur biasa (pembuatan/ganti oleh
+        // pengguna atau pembuatan klien) membatalkan laporan pemulihan
+        // lama: tanpa ini alamatDariServer basi menarik UI kembali ke
+        // alamat hasil pemulihan setiap polling (issue #107).
+        alamatDariServer = null
         // Alamat berganti = kotak masuk berganti: delta mulai dari nol.
         idTerbesar = 0
         daftarPesan.clear()
@@ -168,6 +173,7 @@ class IsProvider : MailProvider {
         uuidKlien = ""
         idEmailAktif = 0
         alamatAktif = ""
+        alamatDariServer = null
         idTerbesar = 0
         daftarPesan.clear()
         idDikenal.clear()
