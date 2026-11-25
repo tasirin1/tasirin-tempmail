@@ -54,13 +54,19 @@ class IsProvider : MailProvider {
     private fun pastikanKlien() {
         if (uuidKlien.isNotBlank()) return
         val json = post("/client/create", listOf("app_uuid" to APP_UUID))
-        uuidKlien = json.getJSONObject("client").getString("uuid")
+        // Uraikan SEMUA kolom dulu, tetapkan keadaan sesudahnya: respons
+        // sukses-sebagian tidak boleh meninggalkan uuid terisi dengan
+        // id email 0 dan alamat kosong permanen (issue #38).
+        val uuidBaru = json.getJSONObject("client").getString("uuid")
         catatEmail(json.getJSONObject("email"))
+        uuidKlien = uuidBaru
     }
 
     private fun catatEmail(email: JSONObject): String {
-        idEmailAktif = email.getLong("id")
-        alamatAktif = email.getString("address")
+        val idBaru = email.getLong("id")
+        val alamatBaru = email.getString("address")
+        idEmailAktif = idBaru
+        alamatAktif = alamatBaru
         return alamatAktif
     }
 
