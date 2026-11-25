@@ -176,7 +176,13 @@ class MainActivity : AppCompatActivity() {
         layananSiap = true
 
         findViewById<Button>(R.id.btnSalin).setOnClickListener {
-            salin(alamatSekarang, "Email tersalin")
+            // Alamat kosong (pembuatan awal gagal) tidak boleh disalin
+            // dengan toast sukses (issue #49).
+            if (alamatSekarang.isBlank()) {
+                toast("Alamat belum siap")
+            } else {
+                salin(alamatSekarang, "Email tersalin")
+            }
         }
         findViewById<Button>(R.id.btnGanti).setOnClickListener {
             // Pembuatan alamat bisa lewat jaringan (layanan berbasis
@@ -403,6 +409,10 @@ class MainActivity : AppCompatActivity() {
 
     // Ambil daftar inbox dari API di thread latar, lalu perbarui tampilan.
     private fun refreshInbox() {
+        // Tanpa alamat aktif tidak ada yang dicek — memanggil provider
+        // dengan alamat kosong hanya membuat sesi yatim di sisi
+        // provider yang tidak pernah ditampilkan (issue #49).
+        if (alamatSekarang.isBlank()) return
         if (!sedangCek.compareAndSet(false, true)) return
         val email = alamatSekarang
         val gen = generasiAlamat
