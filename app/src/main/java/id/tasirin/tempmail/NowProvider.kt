@@ -92,6 +92,11 @@ class NowProvider : MailProvider {
     }
 
     override fun fetchInbox(alamat: String): List<MailItem> = synchronized(kunciSesi) {
+        // Panggilan untuk alamat yang sudah ditinggalkan dijawab kosong
+        // (issue #44) — jangan sentuh sesi untuk alamat basi.
+        if (alamat.isNotBlank() && alamatAktif.isNotBlank() && alamat != alamatAktif) {
+            return@synchronized emptyList()
+        }
         // Satu kali pemulihan sesi: kegagalan pertama dianggap sesi mati
         // → buang sesi, buat baru, coba lagi sekali. Kegagalan kedua
         // dilempar apa adanya (jaringan/server memang bermasalah).
@@ -145,6 +150,9 @@ class NowProvider : MailProvider {
 
 
     override fun fetchDetail(alamat: String, item: MailItem): MailDetail {
+        if (alamat.isNotBlank() && alamatAktif.isNotBlank() && alamat != alamatAktif) {
+            throw IllegalStateException("Alamat sudah berganti")
+        }
         isiTerakhir[item.id]?.let { return it }
         fetchInbox(alamat)
         return isiTerakhir[item.id]

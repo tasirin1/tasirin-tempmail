@@ -126,6 +126,14 @@ class IsProvider : MailProvider {
     }
 
     override fun fetchInbox(alamat: String): List<MailItem> = synchronized(kunciSesi) {
+        // Parameter alamat DULU diabaikan total (issue #44): hasil selalu
+        // inbox alamat aktif provider. Kini panggilan untuk alamat yang
+        // sudah ditinggalkan dijawab kosong — pemanggil tidak mencampur
+        // hasil alamat baru ke alamat lama. Alamat kosong (awal mulai)
+        // dan keadaan belum ada alamat aktif tetap dilayani.
+        if (alamat.isNotBlank() && alamatAktif.isNotBlank() && alamat != alamatAktif) {
+            emptyList()
+        } else {
         pastikanKlien()
         val json = post(
             "/messages",
@@ -167,11 +175,15 @@ class IsProvider : MailProvider {
         // Pesan baru dari server selalu lebih baru dari yang sudah ada.
         daftarPesan.addAll(0, baru)
         ArrayList(daftarPesan)
+        }
     }
 
     override fun alamatAktif(): String? = alamatAktif.ifBlank { null }
 
     override fun fetchDetail(alamat: String, item: MailItem): MailDetail {
+        if (alamat.isNotBlank() && alamatAktif.isNotBlank() && alamat != alamatAktif) {
+            throw IllegalStateException("Alamat sudah berganti")
+        }
         isiTerakhir[item.id]?.let { return it }
         // Cadangan: ambil ulang daftar lalu cari id-nya.
         fetchInbox(alamat)
