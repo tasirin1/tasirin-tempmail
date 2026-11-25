@@ -214,15 +214,43 @@ class MainActivity : AppCompatActivity() {
     private fun jalankanRefresh(email: String, gen: Int) {
             try {
                 val items = TempMailApi.fetchInbox(email)
+                val pernahDimuat = inboxPernahDimuat
+                // Fase 1: tampilkan daftar SEGERA — jangan menunggu pemindaian
+                // isi email yang bisa lama (issue #25).
+                runOnUiThread {
+                    if (email != alamatSekarang) return@runOnUiThread
+                    jedaPollingMs = 8000L
+                    // Daftar hanya dibangun ulang bila isinya benar-benar
+                    // berubah — mayoritas polling isinya sama (issue #20).
+                    if (items != itemInbox) {
+                        itemInbox = items
+                        dataInbox.clear()
+                        for (m in items) {
+                            val baris = HashMap<String, String>()
+                            baris["judul"] = m.subject.ifBlank { "(tanpa judul)" }
+                            baris["dari"] = listOf(m.from, m.time).filter { it.isNotBlank() }.joinToString(" · ")
+                            dataInbox.add(baris)
+                        }
+                        adapterInbox.notifyDataSetChanged()
+                        tvKosong.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+                    }
+                    val jam = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+                    tvStatus.text = "Dicek terakhir $jam — ${items.size} email"
+                    inboxPernahDimuat = true
+                }
+                // Fase 2: pindai kode dari email yang belum tuntas dicek
+                // (issue #2), paling banyak 5 pengambilan isi per putaran —
+                // sisanya putaran berikutnya (issue #25).
                 var kodeBaru: String? = null
-                // Periksa SEMUA email yang belum tuntas dicek, bukan cuma yang
-                // teratas — email kode yang bukan teratas pun ketemu (issue #2).
+                var ambilIsi = 0
                 for (m in items) {
                     if (gen != generasiAlamat) break
                     if (m.id in idSudahDicek) continue
                     var kode = OtpExtractor.extract(m.subject)
                     var tuntas = kode != null
                     if (kode == null) {
+                        if (ambilIsi >= 5) continue
+                        ambilIsi++
                         // Gagal ambil isi email tidak boleh menggagalkan daftar inbox,
                         // tapi emailnya juga BELUM tuntas dicek: jangan ditandai,
                         // supaya dicoba lagi pada polling berikutnya (issue #1).
@@ -248,28 +276,9 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 val kodeFinal = kodeBaru
-                val pernahDimuat = inboxPernahDimuat
                 runOnUiThread {
                     sedangCek.set(false)
                     if (email != alamatSekarang) return@runOnUiThread
-                    jedaPollingMs = 8000L
-                    // Daftar hanya dibangun ulang bila isinya benar-benar
-                    // berubah — mayoritas polling isinya sama (issue #20).
-                    if (items != itemInbox) {
-                        itemInbox = items
-                        dataInbox.clear()
-                        for (m in items) {
-                            val baris = HashMap<String, String>()
-                            baris["judul"] = m.subject.ifBlank { "(tanpa judul)" }
-                            baris["dari"] = listOf(m.from, m.time).filter { it.isNotBlank() }.joinToString(" · ")
-                            dataInbox.add(baris)
-                        }
-                        adapterInbox.notifyDataSetChanged()
-                        tvKosong.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
-                    }
-                    val jam = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
-                    tvStatus.text = "Dicek terakhir $jam — ${items.size} email"
-                    inboxPernahDimuat = true
                     if (kodeFinal != null) {
                         tampilkanKode(kodeFinal)
                         if (pernahDimuat) {
