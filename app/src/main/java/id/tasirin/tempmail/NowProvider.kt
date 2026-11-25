@@ -31,8 +31,11 @@ class NowProvider : MailProvider {
     // wajib @Volatile seperti field sesi lain (issue #41).
     @Volatile
     private var alamatDariServer: String? = null
-    // Disentuh thread polling dan thread detail — wajib tersinkron.
-    private val isiTerakhir = java.util.Collections.synchronizedMap(HashMap<String, MailDetail>())
+    // Cache isi diganti SATU KALI per ambil inbox (tukar referensi
+    // atomik), bukan clear()+isi ulang: thread detail tidak pernah
+    // melihat keadaan setengah kosong (issue #43).
+    @Volatile
+    private var isiTerakhir: Map<String, MailDetail> = emptyMap()
 
     // Wajib dipanggil sambil memegang kunciSesi.
     private fun pastikanSesi() {
@@ -53,7 +56,7 @@ class NowProvider : MailProvider {
         alamatAktif = ""
         csrf = ""
         alamatDariServer = null
-        isiTerakhir.clear()
+        isiTerakhir = emptyMap()
     }
 
     override fun domains(): List<String> = emptyList()
@@ -114,7 +117,7 @@ class NowProvider : MailProvider {
         }
         val arr = json.optJSONArray("emails")
         val hasilList = ArrayList<MailItem>()
-        isiTerakhir.clear()
+        val isiBaru = HashMap<String, MailDetail>()
         for (i in 0 until (arr?.length() ?: 0)) {
             val m = arr!!.getJSONObject(i)
             val dari = m.optString("from_address")
@@ -129,13 +132,14 @@ class NowProvider : MailProvider {
             }
             val waktu = m.optString("date").ifBlank { m.optString("received_at") }
             hasilList.add(MailItem(id = idPesan, from = dari, subject = subjek, time = waktu))
-            isiTerakhir[idPesan] = MailDetail(
+            isiBaru[idPesan] = MailDetail(
                 from = dari,
                 subject = subjek,
                 date = waktu,
                 text = TempMailApi.htmlToText(m.optString("body"))
             )
         }
+        isiTerakhir = isiBaru
         return hasilList
     }
 
