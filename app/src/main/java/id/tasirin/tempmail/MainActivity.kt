@@ -324,6 +324,17 @@ class MainActivity : AppCompatActivity() {
         synchronized(idSudahDicek) { idSudahDicek.clear() }
         synchronized(gagalAmbilIsi) { gagalAmbilIsi.clear() }
         sapuAwalSelesai = false
+        // Domain layanan lama juga diputus: spinner dan domainDaftar
+        // dikosongkan sekarang, bukan menunggu muatan domain layanan
+        // baru — selama jendela muat (atau selamanya bila muat gagal),
+        // domain lama bisa terpakai untuk alamat layanan baru
+        // (issue #95).
+        domainDaftar = emptyList()
+        spinnerDomain.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            emptyList<String>()
+        )
         itemInbox = emptyList()
         dataInbox.clear()
         adapterInbox.notifyDataSetChanged()
