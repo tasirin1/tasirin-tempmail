@@ -201,6 +201,22 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kataPenutupTigaHurufUmumAdalahBatas() {
+        // Issue #149: kalimat berakhir "ini"/"itu" adalah batas
+        // kalimat sungguhan — OTP kalimat berikut tidak tertelan.
+        assertEquals(
+            "445566",
+            OtpExtractor.extract(
+                "Kode pos sudah kami catat untuk alamat ini. Gunakan 445566 untuk masuk."
+            )
+        )
+        assertEquals(
+            "4455",
+            OtpExtractor.extract("Kode pos untuk alamat itu. Gunakan 4455 untuk masuk.")
+        )
+    }
+
+    @Test
     fun singkatanDiLuarDaftarUmumBukanBatas() {
         // Issue #144: aturan struktural menangkap singkatan yang
         // tidak terdaftar satu per satu.

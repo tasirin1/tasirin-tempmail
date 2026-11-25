@@ -157,12 +157,13 @@ object OtpExtractor {
     // batas. '.' hanya batas bila memenuhi SEMUA syarat struktural
     // (issue #144 — daftar singkatan tertutup sendirian selalu
     // menyisakan singkatan di luar daftar seperti dsb./tgl./PT.):
-    // kata sebelumnya minimal 4 huruf dan bukan singkatan, DAN
+    // kata sebelumnya minimal 3 huruf dan bukan singkatan, DAN
     // karakter berikutnya (sesudah spasi) huruf kapital, angka,
-    // baris baru, atau akhir teks. Singkatan umumnya pendek
-    // dan/atau diikuti kata kecil — kalimat sungguhan yang
-    // berakhir dengan kata pendek (<4 huruf) adalah sisa yang
-    // diterima.
+    // baris baru, atau akhir teks. Ambang 3 huruf (issue #149):
+    // kata penutup kalimat yang sangat umum seperti "ini"/"itu"
+    // ikut tertelan pada ambang 4 — singkatan 3 huruf ditanggung
+    // daftar singkatan. Kalimat yang berakhir dengan kata 2 huruf
+    // adalah sisa yang diterima.
     private fun adaBatasKalimat(teks: String): Boolean {
         for (i in teks.indices) {
             when (teks[i]) {
@@ -179,7 +180,7 @@ object OtpExtractor {
                     // frasa/tanda lain ("Kode pos. 40286", elipsis):
                     // tidak ada kalimat yang diakhiri di sana —
                     // BUKAN batas (issue #145).
-                    if (kata.length < 4 || kata in singkatanTitik) continue
+                    if (kata.length < 3 || kata in singkatanTitik) continue
                     var k = i + 1
                     while (k < teks.length && (teks[k] == ' ' || teks[k] == '\t')) k++
                     if (k >= teks.length) return true
