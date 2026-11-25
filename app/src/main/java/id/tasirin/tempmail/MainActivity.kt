@@ -58,6 +58,20 @@ class MainActivity : AppCompatActivity() {
     // Permintaan refresh yang tiba saat refresh lain sedang terbang
     // diingat di sini, bukan ditelan CAS sedangCek (issue #94).
     private val mintaRefreshLagi = AtomicBoolean(false)
+    // Refresh tertunda terjadwal (sesudah gagal, #113) sebagai Runnable
+    // bernama + bendera: bisa dibatalkan di onPause/onDestroy dan
+    // tidak bertumpuk — lambda anonim kemarin bertahan melewati jeda
+    // layar dan menyala di latar (issue #121).
+    private var refreshTertundaTerjadwal = false
+    private val refreshTertundaRunnable = Runnable {
+        refreshTertundaTerjadwal = false
+        refreshInbox()
+    }
+
+    private fun batalkanRefreshTertunda() {
+        handler.removeCallbacks(refreshTertundaRunnable)
+        refreshTertundaTerjadwal = false
+    }
 
     // Dialog isi email yang sedang tampil (ditutup di onDestroy).
     private var dialogDetail: AlertDialog? = null
@@ -490,11 +504,16 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         polling = false
         handler.removeCallbacks(pollRunnable)
+        // Refresh tertunda terjadwal ikut berhenti di latar (issue
+        // #121) — onResume memulai rantai polling dari awal, jadi
+        // tidak ada penyegaran yang hilang.
+        batalkanRefreshTertunda()
         super.onPause()
     }
 
     override fun onDestroy() {
         batalkanRetryBuat()
+        batalkanRefreshTertunda()
         dialogDetail?.dismiss()
         dialogDetail = null
         executor.shutdownNow()
@@ -570,8 +589,11 @@ class MainActivity : AppCompatActivity() {
         if (!mintaRefreshLagi.getAndSet(false)) return
         if (jedaMs <= 0L) {
             refreshInbox()
-        } else {
-            handler.postDelayed({ refreshInbox() }, jedaMs)
+        } else if (!refreshTertundaTerjadwal) {
+            // Satu jadwal saja: permintaan tertunda berikutnya selama
+            // jadwal ini menunggu terserap oleh penyegaran yang sama.
+            refreshTertundaTerjadwal = true
+            handler.postDelayed(refreshTertundaRunnable, jedaMs)
         }
     }
 
