@@ -72,10 +72,17 @@ object TempMailApi {
             // #42/#111 (issue #120). Posisi ikut serta: dua email
             // kembar (pengirim/subjek/waktu sama) kemarin menghasilkan
             // id sintetis yang sama persis dan email kedua tertelan
-            // penanda yang pertama (issue #125).
+            // penanda yang pertama (issue #125). Posisi dihitung dari
+            // EKOR daftar (issue #129): email baru menumpuk di kepala,
+            // jadi hitungan dari kepala menggeser id semua item lama
+            // setiap ada email baru — penanda fase-2 tak mengenali
+            // item itu lagi dan kode lamanya tersalin ulang. Dari
+            // ekor, id item lama stabil (pola yang sama dengan kunci
+            // gabungan MainActivity, issue #35).
             val idMentah = idString(m.opt("mail_id"))
             val idPesan = if (idMentah.isBlank()) {
-                "tanpa-id-" + (dari + "|" + subjek + "|" + waktu).hashCode() + "-" + i
+                "tanpa-id-" + (dari + "|" + subjek + "|" + waktu).hashCode() +
+                    "-" + (list.length() - 1 - i)
             } else {
                 idMentah
             }
