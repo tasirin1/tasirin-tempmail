@@ -40,7 +40,13 @@ class HttpSesi {
             conn.connectTimeout = 15000
             conn.readTimeout = 15000
             conn.instanceFollowRedirects = true
-            conn.setRequestProperty("User-Agent", "TasirinTempMail/${BuildConfig.VERSION_NAME} (Android)")
+            // Header dibuat menyerupai peramban Android beneran: gerbang
+            // bot Cloudflare di tempail.com menolak (HTTP 403) permintaan
+            // yang tampak seperti klien non-peramban — terbukti di
+            // perangkat 2026-11-25 dengan UA aplikasi polos.
+            conn.setRequestProperty("User-Agent", UA_PERAMBAN)
+            conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8")
+            conn.setRequestProperty("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
             synchronized(kuki) {
                 if (kuki.isNotEmpty()) {
                     conn.setRequestProperty("Cookie", kuki.entries.joinToString("; ") { "${it.key}=${it.value}" })
@@ -92,5 +98,7 @@ class HttpSesi {
 
     companion object {
         private const val BATAS_BODY = 2_000_000
+        private const val UA_PERAMBAN =
+            "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
     }
 }
