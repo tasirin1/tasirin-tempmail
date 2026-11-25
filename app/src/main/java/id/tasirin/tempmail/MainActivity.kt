@@ -32,6 +32,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tvEmail: TextView
+    private lateinit var tvSubjudul: TextView
+    private lateinit var spinnerLayanan: Spinner
+    private lateinit var llNamaSendiri: LinearLayout
     private lateinit var spinnerDomain: Spinner
     private lateinit var etNama: EditText
     private lateinit var llKode: LinearLayout
@@ -52,6 +55,16 @@ class MainActivity : AppCompatActivity() {
     private var alamatSekarang: String = ""
     private var spinnerSiap = false
     private var polling = false
+
+    // Layanan aktif + daftar domainnya (untuk pemilih domain).
+    private var providerAktif: MailProvider = Layanan.semua[0]
+    private var domainDaftar: List<String> = emptyList()
+    private var layananSiap = false
+
+    // Penanda generasi pembuatan alamat: hasil latar yang basi (layanan
+    // atau permintaan sudah berganti) tidak boleh menimpa yang baru.
+    @Volatile
+    private var generasiBuat = 0
 
     // Id semua email yang isinya sudah tuntas diperiksa untuk kode
     // verifikasi. Semua email diperiksa, bukan cuma yang teratas (issue #2).
@@ -94,6 +107,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         tvEmail = findViewById(R.id.tvEmail)
+        tvSubjudul = findViewById(R.id.tvSubjudul)
+        spinnerLayanan = findViewById(R.id.spinnerLayanan)
+        llNamaSendiri = findViewById(R.id.llNamaSendiri)
         spinnerDomain = findViewById(R.id.spinnerDomain)
         etNama = findViewById(R.id.etNama)
         llKode = findViewById(R.id.llKode)
@@ -115,17 +131,15 @@ class MainActivity : AppCompatActivity() {
             bukaDetail(item)
         }
 
-        val adapterDomain = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            AddressGenerator.DOMAINS
-        )
-        adapterDomain.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerDomain.adapter = adapterDomain
         spinnerDomain.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, posisi: Int, id: Long) {
                 if (!spinnerSiap || alamatSekarang.isBlank()) return
-                val domain = AddressGenerator.DOMAINS[posisi]
+                // Tukar domain di tempat hanya masuk akal untuk layanan
+                // tanpa sesi (alamat bebas disusun ulang). Di layanan
+                // berbasis sesi, domain hanya berlaku saat membuat
+                // alamat baru.
+                if (!providerAktif.tanpaSesi) return
+                val domain = domainDaftar.getOrNull(posisi) ?: return
                 if (alamatSekarang.substringAfter("@", "") != domain) {
                     setEmail(alamatSekarang.substringBefore("@") + "@" + domain)
                 }
@@ -134,26 +148,43 @@ class MainActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
+        // Pemilih layanan: ganti provider = ganti alamat + muat ulang.
+        val prefsAwal = getSharedPreferences("tempmail", Context.MODE_PRIVATE)
+        providerAktif = Layanan.cari(prefsAwal.getString("layanan", "plus") ?: "plus")
+        val adapterLayanan = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            Layanan.semua.map { it.nama }
+        )
+        adapterLayanan.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerLayanan.adapter = adapterLayanan
+        spinnerLayanan.setSelection(Layanan.semua.indexOf(providerAktif))
+        spinnerLayanan.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, posisi: Int, id: Long) {
+                if (!layananSiap) return
+                val dipilih = Layanan.semua[posisi]
+                if (dipilih !== providerAktif) gantiLayanan(dipilih)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+        layananSiap = true
+
         findViewById<Button>(R.id.btnSalin).setOnClickListener {
             salin(alamatSekarang, "Email tersalin")
         }
         findViewById<Button>(R.id.btnGanti).setOnClickListener {
-            val domain = AddressGenerator.DOMAINS[spinnerDomain.selectedItemPosition]
-            val baru = AddressGenerator.randomLocalPart() + "@" + domain
-            setEmail(baru)
-            // Rotasi langsung menyalin alamat baru — tidak perlu tombol Salin lagi.
-            salin(baru, "Email baru tersalin")
+            // Pembuatan alamat bisa lewat jaringan (layanan berbasis
+            // sesi) — selalu lewat thread latar.
+            buatAlamatBaru(acak = true, pesanSalin = "Email baru tersalin")
         }
         findViewById<Button>(R.id.btnPakai).setOnClickListener {
             val bersih = AddressGenerator.sanitizeLocalPart(etNama.text.toString())
             if (bersih.isEmpty()) {
                 toast("Nama tidak sah")
             } else {
-                val domain = AddressGenerator.DOMAINS[spinnerDomain.selectedItemPosition]
                 etNama.text.clear()
-                val baru = "$bersih@$domain"
-                setEmail(baru)
-                salin(baru, "Email tersalin")
+                buatAlamatBaru(acak = false, namaBersih = bersih, pesanSalin = "Email tersalin")
             }
         }
         findViewById<Button>(R.id.btnSalinKode).setOnClickListener {
@@ -161,14 +192,149 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<Button>(R.id.btnSegarkan).setOnClickListener { refreshInbox() }
 
-        // Alamat tersimpan dari pemakaian sebelumnya, atau buat baru.
-        val prefs = getSharedPreferences("tempmail", Context.MODE_PRIVATE)
-        val tersimpan = prefs.getString("email", null)
-        val awal = if (!tersimpan.isNullOrBlank()) tersimpan else AddressGenerator.randomAddress()
-        val idxDomain = AddressGenerator.DOMAINS.indexOf(awal.substringAfter("@", ""))
-        if (idxDomain >= 0) spinnerDomain.setSelection(idxDomain)
-        spinnerSiap = true
-        setEmail(awal)
+        // Siapkan tampilan sesuai layanan aktif, lalu alamat awal:
+        // sesi yang masih hidup dipakai lagi; alamat tersimpan hanya
+        // untuk layanan tanpa sesi; selain itu buat alamat baru.
+        terapkanLayananKeTampilan()
+        val p = providerAktif
+        val dariSesi = p.alamatAktif()
+        val tersimpan = if (p.tanpaSesi) {
+            val prefs = getSharedPreferences("tempmail", Context.MODE_PRIVATE)
+            prefs.getString("email_" + p.id, null) ?: prefs.getString("email", null)
+        } else null
+        when {
+            dariSesi != null -> {
+                sesuaikanPilihanDomain(dariSesi)
+                spinnerSiap = true
+                setEmail(dariSesi)
+            }
+            !tersimpan.isNullOrBlank() -> {
+                sesuaikanPilihanDomain(tersimpan)
+                spinnerSiap = true
+                setEmail(tersimpan)
+            }
+            p.tanpaSesi -> {
+                val awal = p.alamatAcak(null)
+                sesuaikanPilihanDomain(awal)
+                spinnerSiap = true
+                setEmail(awal)
+            }
+            else -> {
+                spinnerSiap = true
+                tvEmail.text = "Menyiapkan alamat…"
+                buatAlamatBaru(acak = true, pesanSalin = null)
+            }
+        }
+    }
+
+    // Samakan subjudul + visibilitas blok nama sendiri dengan layanan
+    // aktif, dan muat daftar domainnya (jaringan bila dinamis).
+    private fun terapkanLayananKeTampilan() {
+        val p = providerAktif
+        tvSubjudul.text = "Email sekali pakai • ${p.nama}"
+        llNamaSendiri.visibility = if (p.bisaCustom) View.VISIBLE else View.GONE
+        if (!p.bisaCustom) return
+        if (p.tanpaSesi) {
+            muatDomain(p.domains())
+        } else {
+            // Domain dinamis (tempmail.is): ambil dari server di latar.
+            try {
+                executor.execute {
+                    try {
+                        val d = p.domains()
+                        runOnUiThread {
+                            if (p === providerAktif) muatDomain(d)
+                        }
+                    } catch (e: Exception) {
+                        // Domain gagal dimuat bukan keadaan fatal: tombol
+                        // Pakai akan memuatnya lagi saat dipakai.
+                    }
+                }
+            } catch (e: RejectedExecutionException) {
+            }
+        }
+    }
+
+    private fun muatDomain(daftar: List<String>) {
+        domainDaftar = daftar
+        val adapterDomain = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            daftar
+        )
+        adapterDomain.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        val siapSebelum = spinnerSiap
+        spinnerSiap = false
+        spinnerDomain.adapter = adapterDomain
+        if (alamatSekarang.isNotBlank()) sesuaikanPilihanDomain(alamatSekarang)
+        spinnerSiap = siapSebelum
+    }
+
+    private fun sesuaikanPilihanDomain(alamat: String) {
+        val idx = domainDaftar.indexOf(alamat.substringAfter("@", ""))
+        if (idx >= 0 && idx != spinnerDomain.selectedItemPosition) {
+            spinnerDomain.setSelection(idx)
+        }
+    }
+
+    // Ganti layanan aktif: simpan pilihan, sesuaikan tampilan, lalu
+    // pakai alamat sesi yang masih hidup atau buat alamat baru.
+    private fun gantiLayanan(p: MailProvider) {
+        providerAktif = p
+        generasiBuat++
+        getSharedPreferences("tempmail", Context.MODE_PRIVATE)
+            .edit().putString("layanan", p.id).apply()
+        terapkanLayananKeTampilan()
+        val dariSesi = p.alamatAktif()
+        val tersimpan = if (p.tanpaSesi) {
+            getSharedPreferences("tempmail", Context.MODE_PRIVATE).getString("email_" + p.id, null)
+        } else null
+        when {
+            dariSesi != null -> setEmail(dariSesi)
+            !tersimpan.isNullOrBlank() -> setEmail(tersimpan)
+            p.tanpaSesi -> setEmail(p.alamatAcak(null))
+            else -> {
+                tvEmail.text = "Menyiapkan alamat…"
+                buatAlamatBaru(acak = true, pesanSalin = null)
+            }
+        }
+    }
+
+    // Buat alamat (acak/custom) di thread latar — layanan berbasis sesi
+    // butuh jaringan. Hasil basi (sudah ada permintaan lebih baru atau
+    // layanan berganti) dibuang.
+    private fun buatAlamatBaru(acak: Boolean, namaBersih: String? = null, pesanSalin: String?) {
+        val p = providerAktif
+        val gen = ++generasiBuat
+        val domain = domainDaftar.getOrNull(spinnerDomain.selectedItemPosition)
+        try {
+            executor.execute {
+                try {
+                    val baru = if (acak) {
+                        p.alamatAcak(domain)
+                    } else {
+                        val d = domain ?: p.domains().firstOrNull()
+                        ?: throw IllegalStateException("Daftar domain kosong")
+                        p.alamatCustom(namaBersih ?: "", d)
+                    }
+                    runOnUiThread {
+                        if (gen != generasiBuat || p !== providerAktif) return@runOnUiThread
+                        setEmail(baru)
+                        // Rotasi langsung menyalin alamat baru — tidak
+                        // perlu tombol Salin lagi.
+                        if (pesanSalin != null) salin(baru, pesanSalin)
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        if (gen != generasiBuat || p !== providerAktif) return@runOnUiThread
+                        if (alamatSekarang.isBlank()) tvEmail.text = "(gagal menyiapkan alamat)"
+                        toast("Gagal membuat alamat: ${e.message ?: "jaringan bermasalah"}")
+                    }
+                }
+            }
+        } catch (e: RejectedExecutionException) {
+            // Activity sedang dihancurkan — abaikan dengan aman.
+        }
     }
 
     override fun onResume() {
@@ -196,8 +362,12 @@ class MainActivity : AppCompatActivity() {
         generasiAlamat++
         alamatSekarang = alamat
         tvEmail.text = alamat
-        getSharedPreferences("tempmail", Context.MODE_PRIVATE)
-            .edit().putString("email", alamat).apply()
+        // Simpanan per layanan; kunci lama "email" tetap ditulis untuk
+        // layanan asal supaya tidak ada yang kehilangan alamatnya.
+        val editor = getSharedPreferences("tempmail", Context.MODE_PRIVATE).edit()
+            .putString("email_" + providerAktif.id, alamat)
+        if (providerAktif.tanpaSesi) editor.putString("email", alamat)
+        editor.apply()
         synchronized(idSudahDicek) { idSudahDicek.clear() }
         synchronized(gagalAmbilIsi) { gagalAmbilIsi.clear() }
         sapuAwalSelesai = false
@@ -214,17 +384,18 @@ class MainActivity : AppCompatActivity() {
         if (!sedangCek.compareAndSet(false, true)) return
         val email = alamatSekarang
         val gen = generasiAlamat
+        val p = providerAktif
         try {
-            executor.execute { jalankanRefresh(email, gen) }
+            executor.execute { jalankanRefresh(email, gen, p) }
         } catch (e: RejectedExecutionException) {
             // Activity sedang dihancurkan — jangan crash, bebaskan penanda.
             sedangCek.set(false)
         }
     }
 
-    private fun jalankanRefresh(email: String, gen: Int) {
+    private fun jalankanRefresh(email: String, gen: Int, p: MailProvider) {
             try {
-                val items = TempMailApi.fetchInbox(email)
+                val items = p.fetchInbox(email)
                 val bolehSalin = sapuAwalSelesai
                 // Fase 1: tampilkan daftar SEGERA — jangan menunggu pemindaian
                 // isi email yang bisa lama (issue #25).
@@ -285,7 +456,7 @@ class MainActivity : AppCompatActivity() {
                         // tapi emailnya juga BELUM tuntas dicek: jangan ditandai,
                         // supaya dicoba lagi pada polling berikutnya (issue #1).
                         try {
-                            val detail = TempMailApi.fetchDetail(email, m.id)
+                            val detail = p.fetchDetail(email, m)
                             kode = OtpExtractor.extract(m.subject + "\n" + detail.text)
                             tuntas = true
                             synchronized(gagalAmbilIsi) { gagalAmbilIsi.remove(kunci) }
@@ -321,6 +492,13 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     sedangCek.set(false)
                     if (email != alamatSekarang) return@runOnUiThread
+                    // Server melaporkan alamat lain (mis. alamat lama
+                    // kedaluwarsa dan diputar server): ikuti server.
+                    val alamatServer = p.alamatServer()
+                    if (alamatServer != null && alamatServer != alamatSekarang) {
+                        setEmail(alamatServer)
+                        return@runOnUiThread
+                    }
                     if (kodeFinal != null) {
                         tampilkanKode(kodeFinal)
                         if (bolehSalin) {
@@ -349,18 +527,19 @@ class MainActivity : AppCompatActivity() {
         // dialog (issue #28).
         if (!sedangBuka.compareAndSet(false, true)) return
         val email = alamatSekarang
+        val p = providerAktif
         toast("Membuka email…")
         try {
-            executorDetail.execute { jalankanBukaDetail(email, item) }
+            executorDetail.execute { jalankanBukaDetail(email, item, p) }
         } catch (e: RejectedExecutionException) {
             // Activity sedang dihancurkan — abaikan dengan aman (issue #24).
             sedangBuka.set(false)
         }
     }
 
-    private fun jalankanBukaDetail(email: String, item: MailItem) {
+    private fun jalankanBukaDetail(email: String, item: MailItem, p: MailProvider) {
             try {
-                val detail = TempMailApi.fetchDetail(email, item.id)
+                val detail = p.fetchDetail(email, item)
                 val kode = OtpExtractor.extract(detail.subject + "\n" + detail.text)
                 runOnUiThread {
                     sedangBuka.set(false)
