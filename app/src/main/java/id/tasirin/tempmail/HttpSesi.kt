@@ -43,13 +43,15 @@ class HttpSesi {
         return synchronized(kunciPermintaan) { kirimSekali(metode, url, body, tipeIsi, headerTambahan) }
     }
 
-    private fun kirimSekali(metode: String, url: String, body: String?, tipeIsi: String?, headerTambahan: Map<String, String>): HasilHttp {
+    private fun kirimSekali(metode: String, url: String, body: String?, tipeIsi: String?, headerTambahan: Map<String, String>, sisaAlihan: Int = 3): HasilHttp {
         val conn = URL(url).openConnection() as HttpURLConnection
         try {
             conn.requestMethod = metode
             conn.connectTimeout = 15000
             conn.readTimeout = 15000
-            conn.instanceFollowRedirects = true
+            // Alihan TIDAK diikuti otomatis — ditangani manual di bawah
+            // supaya kuki sesi tidak diteruskan ke host lain (issue #61).
+            conn.instanceFollowRedirects = false
             // Header dibuat menyerupai peramban Android beneran: gerbang
             // bot di beberapa layanan menolak (HTTP 403) permintaan yang
             // tampak seperti klien non-peramban — terbukti di perangkat
@@ -93,6 +95,20 @@ class HttpSesi {
                                 if (mati) kuki.remove(namaKuki) else kuki[namaKuki] = isiKuki
                             }
                         }
+                    }
+                }
+            }
+            // Alihan manual (issue #61): hanya GET, hanya ke host yang
+            // sama, maksimal 3 kali. Kuki dari respons alihan sudah
+            // disimpan di atas sebelum mengikuti. Alihan lintas host
+            // atau POST dikembalikan apa adanya ke pemanggil.
+            if (kode in intArrayOf(301, 302, 303, 307, 308) && metode == "GET" && sisaAlihan > 0) {
+                val lokasi = conn.getHeaderField("Location")
+                if (!lokasi.isNullOrBlank()) {
+                    val asal = URL(url)
+                    val tujuan = URL(asal, lokasi)
+                    if (tujuan.host == asal.host) {
+                        return kirimSekali("GET", tujuan.toString(), null, null, emptyMap(), sisaAlihan - 1)
                     }
                 }
             }
