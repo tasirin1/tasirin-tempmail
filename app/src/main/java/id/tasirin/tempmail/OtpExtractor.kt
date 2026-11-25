@@ -105,8 +105,13 @@ object OtpExtractor {
 
     // Label kode pos tepat sebelum angka ini? (jendela pandang-balik
     // pendek; label yang jauh dari angkanya urusan jalur konteks).
+    // \b di depan wajib (issue #133, pola yang sama dengan perbaikan
+    // #117): tanpa itu "zip" di dalam unzip/gzip ikut dianggap label.
+    // Alternatif telanjang zip/postal wajib diakhiri titik dua
+    // ("ZIP: 123456") — kata "zip" biasa ("file zip 123456") bukan
+    // label dan tidak boleh menelan kode yang sah.
     private val polaLabelKodePos =
-        Regex("""(?i)(?:kode[\s-]*pos(?:nya|ku|mu|kau|anda)?|(?:zip|postal)[\s-]*code|zip)[\s:]*$""")
+        Regex("""(?i)\b(?:kode[\s-]*pos(?:nya|ku|mu|kau|anda)?|(?:zip|postal)[\s-]*code|(?:zip|postal)[\s]*:)[\s:]*$""")
 
     private fun berlabelKodePos(teks: String, awalAngka: Int): Boolean {
         val sebelum = teks.substring(maxOf(0, awalAngka - 20), awalAngka)

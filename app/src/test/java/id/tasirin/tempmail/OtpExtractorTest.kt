@@ -157,6 +157,16 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kataZipBukanLabelTidakMenelanKode() {
+        // Issue #133: "zip" di dalam kata lain atau sebagai kata
+        // biasa bukan label kode pos — kode sah tetap ketemu.
+        assertEquals("123456", OtpExtractor.extract("unzip 123456"))
+        assertEquals("123456", OtpExtractor.extract("file zip 123456"))
+        // Label telanjang dengan titik dua tetap penjaga.
+        assertNull(OtpExtractor.extract("Postal: 123456"))
+    }
+
+    @Test
     fun kodePosEnamDigitDanTerpencarDilewati() {
         // Issue #128: penjaga kode pos juga berlaku di jalur cadangan
         // (pola 6 digit dan pola terpencar), bukan hanya jalur konteks.
