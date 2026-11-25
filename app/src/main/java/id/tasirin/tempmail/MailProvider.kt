@@ -94,7 +94,8 @@ object Layanan {
     val semua: List<MailProvider> = listOf(
         PlusProvider(),
         IsProvider(),
-        NowProvider()
+        NowProvider(),
+        KittenProvider()
     )
 
     fun cari(id: String): MailProvider = semua.firstOrNull { it.id == id } ?: semua[0]
