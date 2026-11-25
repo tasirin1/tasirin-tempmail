@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     // belakang polling yang bisa makan 2x timeout (issue #8).
     private val executorDetail = Executors.newSingleThreadExecutor()
     private val sedangCek = AtomicBoolean(false)
+    private val sedangBuka = AtomicBoolean(false)
 
     private var alamatSekarang: String = ""
     private var spinnerSiap = false
@@ -317,12 +318,16 @@ class MainActivity : AppCompatActivity() {
 
     // Ambil isi lengkap satu email lalu tampilkan sebagai dialog.
     private fun bukaDetail(item: MailItem) {
+        // Satu bacaan pada satu waktu — ketukan beruntun tidak menumpuk
+        // dialog (issue #28).
+        if (!sedangBuka.compareAndSet(false, true)) return
         val email = alamatSekarang
         toast("Membuka email…")
         try {
             executorDetail.execute { jalankanBukaDetail(email, item) }
         } catch (e: RejectedExecutionException) {
             // Activity sedang dihancurkan — abaikan dengan aman (issue #24).
+            sedangBuka.set(false)
         }
     }
 
@@ -331,6 +336,7 @@ class MainActivity : AppCompatActivity() {
                 val detail = TempMailApi.fetchDetail(email, item.id)
                 val kode = OtpExtractor.extract(detail.subject + "\n" + detail.text)
                 runOnUiThread {
+                    sedangBuka.set(false)
                     // Activity bisa sudah berakhir/berputar selama isi email
                     // diambil — dialog pada Activity mati = crash (issue #3).
                     if (isFinishing || isDestroyed) return@runOnUiThread
@@ -352,7 +358,10 @@ class MainActivity : AppCompatActivity() {
                     builder.show()
                 }
             } catch (e: Exception) {
-                runOnUiThread { toast("Gagal membuka: ${e.message ?: "jaringan bermasalah"}") }
+                runOnUiThread {
+                    sedangBuka.set(false)
+                    toast("Gagal membuka: ${e.message ?: "jaringan bermasalah"}")
+                }
             }
     }
 
