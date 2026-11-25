@@ -90,19 +90,34 @@ object TempMailApi {
         )
     }
 
-    // Ubah HTML sederhana jadi teks polos: buang tag, rapikan entitas umum.
+    // Pola untuk htmlToText — dikompilasi sekali, bukan tiap panggilan.
+    private val reScript = Regex("(?is)<script[^>]*>.*?</script>")
+    private val reStyle = Regex("(?is)<style[^>]*>.*?</style>")
+    private val reBr = Regex("(?i)<br\\s*/?>")
+    private val reTutupP = Regex("(?i)</p>")
+    private val reTag = Regex("<[^>]+>")
+    private val reEntitasAngka = Regex("&#(\\d+);")
+    private val reEntitasHex = Regex("(?i)&#x([0-9a-f]+);")
+    private val reSpasi = Regex("[ \\t]+")
+    private val reBaris3 = Regex("\n{3,}")
+
+    // Ubah HTML sederhana jadi teks polos: buang blok script/style beserta
+    // isinya (issue #13), buang tag, rapikan entitas umum + entitas numerik.
     fun htmlToText(html: String): String {
-        var t = html.replace(Regex("(?i)<br\\s*/?>"), "\n")
-        t = t.replace(Regex("(?i)</p>"), "\n\n")
-        t = t.replace(Regex("<[^>]+>"), "")
+        var t = html.replace(reScript, "").replace(reStyle, "")
+        t = t.replace(reBr, "\n")
+        t = t.replace(reTutupP, "\n\n")
+        t = t.replace(reTag, "")
+        t = t.replace(reEntitasAngka) { it.groupValues[1].toInt().toChar().toString() }
+        t = t.replace(reEntitasHex) { it.groupValues[1].toInt(16).toChar().toString() }
         t = t.replace("&nbsp;", " ")
             .replace("&amp;", "&")
             .replace("&lt;", "<")
             .replace("&gt;", ">")
             .replace("&quot;", "\"")
             .replace("&#39;", "'")
-        return t.replace(Regex("[ \\t]+"), " ")
-            .replace(Regex("\n{3,}"), "\n\n")
+        return t.replace(reSpasi, " ")
+            .replace(reBaris3, "\n\n")
             .trim()
     }
 }
