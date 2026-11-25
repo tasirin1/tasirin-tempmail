@@ -60,6 +60,10 @@ class MainActivity : AppCompatActivity() {
     // Dialog isi email yang sedang tampil (ditutup di onDestroy).
     private var dialogDetail: AlertDialog? = null
 
+    // Pemformat jam status — dipakai hanya di thread UI, dibuat sekali
+    // (dulu dialokasi ulang tiap putaran polling, issue #69).
+    private val formatJam = SimpleDateFormat("HH:mm:ss", Locale.US)
+
     private var alamatSekarang: String = ""
     private var spinnerSiap = false
     private var polling = false
@@ -484,7 +488,7 @@ class MainActivity : AppCompatActivity() {
                         adapterInbox.notifyDataSetChanged()
                         tvKosong.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
                     }
-                    val jam = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+                    val jam = formatJam.format(Date())
                     tvStatus.text = "Dicek terakhir $jam — ${items.size} email"
                 }
                 // Fase 2: pindai kode dari email yang belum tuntas dicek
@@ -498,6 +502,9 @@ class MainActivity : AppCompatActivity() {
                 // menumpuk di kepala, jadi kunci email lama tidak bergeser
                 // dan tidak diperiksa ulang (issue #35).
                 val kunciPerIndeks = HashMap<Int, String>()
+                // Peta hanya dibangun bila memang ada email tanpa id —
+                // kasus umum (semua ber-id) melewatinya (issue #69).
+                if (items.any { it.id.isBlank() }) {
                 val hitungEkor = HashMap<String, Int>()
                 for (i in items.indices.reversed()) {
                     val m = items[i]
@@ -507,6 +514,7 @@ class MainActivity : AppCompatActivity() {
                         hitungEkor[dasar] = urut + 1
                         kunciPerIndeks[i] = "$dasar#$urut"
                     }
+                }
                 }
                 for ((indeks, m) in items.withIndex()) {
                     if (gen != generasiAlamat) break
