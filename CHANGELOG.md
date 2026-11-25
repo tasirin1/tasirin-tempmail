@@ -4,6 +4,16 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-11-25
+
+### Fixed
+
+- Maraton Audit-4: 1 temuan diperbaiki (issue #35).
+- Nomor urut kunci email tanpa mail_id kini dihitung dari ekor daftar,
+  jadi kedatangan email identik baru tidak menggeser kunci email lama —
+  email lama tidak diperiksa ulang dan kodenya tidak tampil lagi
+  seolah baru (#35).
+
 ## [0.5.0] - 2026-11-25
 
 ### Fixed
