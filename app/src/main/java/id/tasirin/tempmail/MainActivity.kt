@@ -251,7 +251,10 @@ class MainActivity : AppCompatActivity() {
                 var ambilIsi = 0
                 for (m in items) {
                     if (gen != generasiAlamat) break
-                    if (m.id in idSudahDicek) continue
+                    // Email tanpa id memakai kunci gabungan isi — kunci kosong
+                    // bersama membuat email lain tak pernah dicek (issue #30).
+                    val kunci = m.id.ifBlank { "tanpa-id:" + m.subject + "|" + m.from + "|" + m.time }
+                    if (kunci in idSudahDicek) continue
                     var kode = OtpExtractor.extract(m.subject)
                     var tuntas = kode != null
                     if (kode == null) {
@@ -264,14 +267,14 @@ class MainActivity : AppCompatActivity() {
                             val detail = TempMailApi.fetchDetail(email, m.id)
                             kode = OtpExtractor.extract(m.subject + "\n" + detail.text)
                             tuntas = true
-                            synchronized(gagalAmbilIsi) { gagalAmbilIsi.remove(m.id) }
+                            synchronized(gagalAmbilIsi) { gagalAmbilIsi.remove(kunci) }
                         } catch (e: Exception) {
                             kode = null
                             // Gagal sesaat dicoba lagi (issue #1), tapi dibatasi:
                             // 3x gagal berturut = menyerah, tandai tuntas (issue #26).
                             val kali = synchronized(gagalAmbilIsi) {
-                                val n = (gagalAmbilIsi[m.id] ?: 0) + 1
-                                gagalAmbilIsi[m.id] = n
+                                val n = (gagalAmbilIsi[kunci] ?: 0) + 1
+                                gagalAmbilIsi[kunci] = n
                                 n
                             }
                             if (kali >= 3) tuntas = true
@@ -281,7 +284,7 @@ class MainActivity : AppCompatActivity() {
                     // jangan tandai apa pun untuk alamat baru (issue #7).
                     if (tuntas && gen == generasiAlamat) {
                         synchronized(idSudahDicek) {
-                            idSudahDicek.add(m.id)
+                            idSudahDicek.add(kunci)
                             // Jaga ukuran penanda: simpan 50 id terakhir saja.
                             while (idSudahDicek.size > 50) {
                                 idSudahDicek.remove(idSudahDicek.first())
