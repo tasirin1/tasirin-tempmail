@@ -34,7 +34,7 @@ object TempMailApi {
             val code = conn.responseCode
             val stream = if (code in 200..299) conn.inputStream else conn.errorStream
             val body = stream?.let {
-                BufferedReader(InputStreamReader(it, Charsets.UTF_8)).use { r -> r.readText() }
+                BufferedReader(InputStreamReader(it, Charsets.UTF_8)).use { r -> bacaTerbatas(r) }
             } ?: ""
             if (code !in 200..299) throw IllegalStateException("HTTP $code")
             return JSONObject(body)
@@ -42,6 +42,24 @@ object TempMailApi {
             // Koneksi wajib dilepas juga di jalur gagal (issue #9).
             conn.disconnect()
         }
+    }
+
+    // Batas ukuran body respons yang diterima (issue #14): aplikasi hanya
+    // butuh daftar 20 email dan satu isi email, bukan berkas raksasa.
+    private const val BATAS_BODY = 2_000_000
+
+    private fun bacaTerbatas(r: BufferedReader): String {
+        val sb = StringBuilder()
+        val buf = CharArray(8192)
+        while (true) {
+            val n = r.read(buf)
+            if (n < 0) break
+            sb.append(buf, 0, n)
+            if (sb.length > BATAS_BODY) {
+                throw IllegalStateException("Respons server terlalu besar")
+            }
+        }
+        return sb.toString()
     }
 
     // mail_id bisa berupa angka atau teks di JSON — samakan jadi String.
