@@ -32,7 +32,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             // Tanda tangan hanya bila properti keystore diberikan (CI rilis).
             // Tanpa itu assembleRelease menghasilkan APK tanpa tanda tangan.
             if (project.findProperty("storeFile") != null) {
