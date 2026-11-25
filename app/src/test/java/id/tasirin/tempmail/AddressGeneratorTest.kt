@@ -16,14 +16,8 @@ class AddressGeneratorTest {
         assertTrue(nama.all { it in 'a'..'z' || it in '0'..'9' })
     }
 
-    @Test
-    fun alamatAcakMemakaiDomainResmi() {
-        // Susunan yang sama seperti PlusProvider.alamatAcak (randomAddress
-        // yang mati sudah dihapus — issue #72).
-        val alamat = AddressGenerator.randomLocalPart(random = Random(7)) +
-            "@" + AddressGenerator.DOMAINS.random(Random(7))
-        assertTrue(alamat.substringAfter("@") in AddressGenerator.DOMAINS)
-    }
+    // Tes alamat acak dipindah ke PlusProviderTest: komposisi produksi
+    // diuji langsung, bukan disusun ulang di dalam tes (issue #103).
 
     @Test
     fun sanitizeMembersihkanNama() {
