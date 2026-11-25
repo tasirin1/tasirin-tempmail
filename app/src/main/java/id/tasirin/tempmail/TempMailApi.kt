@@ -68,10 +68,14 @@ object TempMailApi {
             val waktu = m.optString("time")
             // Item tanpa mail_id TIDAK boleh berbagi id "" bersama
             // (detail membuka email yang salah, penanda UI bertabrakan)
-            // — pakai kunci sidik isi, pola #42/#111 (issue #120).
+            // — pakai kunci sidik isi + posisi dalam daftar, pola
+            // #42/#111 (issue #120). Posisi ikut serta: dua email
+            // kembar (pengirim/subjek/waktu sama) kemarin menghasilkan
+            // id sintetis yang sama persis dan email kedua tertelan
+            // penanda yang pertama (issue #125).
             val idMentah = idString(m.opt("mail_id"))
             val idPesan = if (idMentah.isBlank()) {
-                "tanpa-id-" + (dari + "|" + subjek + "|" + waktu).hashCode()
+                "tanpa-id-" + (dari + "|" + subjek + "|" + waktu).hashCode() + "-" + i
             } else {
                 idMentah
             }
@@ -81,6 +85,15 @@ object TempMailApi {
     }
 
     fun fetchDetail(email: String, mailId: String): MailDetail {
+        // Id sintetis (email tanpa mail_id dari server, #120) BUKAN id
+        // sungguhan — jangan kirim ke server lalu melaporkan pesan
+        // menyesatkan "sudah terhapus"; emailnya ada, hanya isinya
+        // memang tidak bisa diambil tanpa id (issue #125).
+        if (mailId.startsWith("tanpa-id-")) {
+            throw IllegalStateException(
+                "tempmail.plus tidak memberi id untuk email ini — isinya tidak tersedia"
+            )
+        }
         val json = getJson("$BASE/api/mails/${encPath(mailId)}?email=${enc(email)}&epin=")
         // Konsisten dengan fetchInbox (issue #10): penolakan layanan adalah
         // kegagalan yang jelas, bukan email kosong (issue #29).
