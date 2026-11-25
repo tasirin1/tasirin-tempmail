@@ -59,6 +59,10 @@ class MainActivity : AppCompatActivity() {
     // tidak mencemari keadaan alamat baru (issue #7).
     private val idSudahDicek = Collections.synchronizedSet(LinkedHashSet<String>())
 
+    // Hitungan gagal ambil isi per email: sesudah 3x gagal, email dianggap
+    // tuntas (menyerah) supaya tidak dicoba ulang selamanya (issue #26).
+    private val gagalAmbilIsi = Collections.synchronizedMap(HashMap<String, Int>())
+
     @Volatile
     private var generasiAlamat = 0
 
@@ -189,6 +193,7 @@ class MainActivity : AppCompatActivity() {
         getSharedPreferences("tempmail", Context.MODE_PRIVATE)
             .edit().putString("email", alamat).apply()
         synchronized(idSudahDicek) { idSudahDicek.clear() }
+        synchronized(gagalAmbilIsi) { gagalAmbilIsi.clear() }
         inboxPernahDimuat = false
         itemInbox = emptyList()
         dataInbox.clear()
@@ -258,8 +263,17 @@ class MainActivity : AppCompatActivity() {
                             val detail = TempMailApi.fetchDetail(email, m.id)
                             kode = OtpExtractor.extract(m.subject + "\n" + detail.text)
                             tuntas = true
+                            synchronized(gagalAmbilIsi) { gagalAmbilIsi.remove(m.id) }
                         } catch (e: Exception) {
                             kode = null
+                            // Gagal sesaat dicoba lagi (issue #1), tapi dibatasi:
+                            // 3x gagal berturut = menyerah, tandai tuntas (issue #26).
+                            val kali = synchronized(gagalAmbilIsi) {
+                                val n = (gagalAmbilIsi[m.id] ?: 0) + 1
+                                gagalAmbilIsi[m.id] = n
+                                n
+                            }
+                            if (kali >= 3) tuntas = true
                         }
                     }
                     // Alamat berganti di tengah pengambilan: hasil ini basi,
