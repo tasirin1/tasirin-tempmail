@@ -529,9 +529,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Jalankan refresh yang tertunda selama refresh sebelumnya terbang
-    // (issue #94). Dipanggil sesudah sedangCek dibebaskan.
-    private fun teruskanRefreshTertunda() {
-        if (mintaRefreshLagi.getAndSet(false)) refreshInbox()
+    // (issue #94). Dipanggil sesudah sedangCek dibebaskan. Sesudah
+    // KEGAGALAN, pemanggil memberi jedaMs = jeda polling yang berlaku:
+    // rantai tertunda tidak boleh menembus backoff — dulu refresh gagal
+    // (±15 detik timeout) langsung disambung refresh berikutnya tanpa
+    // jeda, jadi polling tidak pernah melambat saat jaringan mati
+    // (issue #113).
+    private fun teruskanRefreshTertunda(jedaMs: Long = 0L) {
+        if (!mintaRefreshLagi.getAndSet(false)) return
+        if (jedaMs <= 0L) {
+            refreshInbox()
+        } else {
+            handler.postDelayed({ refreshInbox() }, jedaMs)
+        }
     }
 
     private fun jalankanRefresh(email: String, gen: Int, p: MailProvider) {
@@ -677,13 +687,19 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 runOnUiThread {
                     sedangCek.set(false)
-                    teruskanRefreshTertunda()
                     // Pemeriksaan provider disamakan dengan callback
                     // sukses/detail: kegagalan layanan lama (alamatnya
                     // kebetulan sama) tidak boleh menimpa status dan
-                    // jeda polling layanan baru (issue #97).
-                    if (email != alamatSekarang || p !== providerAktif) return@runOnUiThread
+                    // jeda polling layanan baru (issue #97). Refresh
+                    // tertunda diteruskan DENGAN jeda backoff (issue
+                    // #113): yang basi memakai jeda yang berlaku, yang
+                    // segar memakai jeda sesudah digandakan.
+                    if (email != alamatSekarang || p !== providerAktif) {
+                        teruskanRefreshTertunda(jedaPollingMs)
+                        return@runOnUiThread
+                    }
                     jedaPollingMs = (jedaPollingMs * 2).coerceAtMost(60000L)
+                    teruskanRefreshTertunda(jedaPollingMs)
                     tvStatus.text = "Gagal cek inbox: ${e.message ?: "jaringan bermasalah"}"
                 }
             } catch (e: Throwable) {
