@@ -4,6 +4,53 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-11-25
+
+Hasil Maraton-6 (Audit-6: 44 temuan, issue #36–#79 — kestabilan
+layanan berbasis sesi, keamanan pasangan alamat+layanan, efisiensi).
+
+### Fixed
+
+- tempmail.is: pembuatan klien kini dikunci — dua thread tidak lagi
+  bisa membuat dua klien berbeda (alamat tampil selalu cocok dengan
+  inbox yang dicek); respons sukses-sebagian tidak lagi merusak
+  keadaan provider secara permanen.
+- tempmail.now: sesi yang mati di server kini dibuang dan dibuat baru
+  secara otomatis (dulu macet permanen sampai aplikasi dipaksa
+  berhenti); token CSRF disegarkan saat ganti alamat ditolak 403.
+- Ganti layanan tidak lagi mencampur layanan baru dengan alamat lama:
+  kode OTP layanan baru tidak tersalin di bawah alamat lama, dan
+  dialog email alamat lama tidak muncul di atas alamat baru.
+- Polling tempmail.is memakai delta (known_message_id): isi email
+  lama tidak diunduh ulang tiap 8 detik.
+- Cache isi email diganti atomik dan disatukan (KotakIsi): tidak ada
+  lagi "email tidak ditemukan" palsu atau isi tertukar antar email.
+- Ekstraktor OTP tidak lagi menelan kode pos ("Kode pos: 40286") dan
+  potongan nomor telepon (0812-345-678) sebagai kode verifikasi.
+- Waktu email tempmail.is ditampilkan dalam zona waktu perangkat
+  (dulu UTC mentah, meleset 7 jam untuk WIB).
+- Tombol Ganti Email/Pakai tidak mengantre di belakang pindaian OTP
+  polling (executor aksi terpisah) dan dijaga dari ketukan beruntun.
+- Keadaan alamat kosong dijaga: tombol Salin tidak menyalin string
+  kosong, polling tidak membuat sesi yatim.
+- Kuki penghapusan dari server dihormati; alihan HTTP hanya diikuti
+  untuk GET satu host; permintaan per sesi diserialkan.
+- Respons non-JSON dari server dilaporkan dengan pesan yang jelas.
+
+### Changed
+
+- TempMailApi kini memakai HttpSesi: satu tumpukan HTTP untuk semua
+  layanan (kebijakan timeout/batas body/tampang permintaan seragam).
+- Semua teks statis layout dipindah ke strings.xml.
+- CI: unit test tidak lagi jalan dua kali tiap rilis; artefak debug
+  beretensi 7 hari; langkah terbit rilis idempoten; semua action
+  GitHub di-pin ke SHA commit.
+
+### Removed
+
+- Kode mati: AddressGenerator.randomAddress() dan sisa komentar basi
+  pasca-pencabutan layanan net.
+
 ## [0.7.2] - 2026-11-25
 
 ### Removed
