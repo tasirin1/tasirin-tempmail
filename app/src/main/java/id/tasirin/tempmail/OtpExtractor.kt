@@ -150,7 +150,7 @@ object OtpExtractor {
     private val singkatanTitik = setOf(
         "jl", "no", "hal", "dr", "drs", "h", "hj", "sdr", "sdri",
         "prof", "ir", "ust", "dsb", "dll", "tsb", "tgl", "vol",
-        "pt", "an", "up", "dst", "sda",
+        "pt", "an", "up", "dst", "sda", "etc",
         // Singkatan alamat/administrasi yang terbukti realistis
         // di blok alamat Indonesia (issue #151: "prov." >=4 huruf
         // lolos dari aturan struktural).

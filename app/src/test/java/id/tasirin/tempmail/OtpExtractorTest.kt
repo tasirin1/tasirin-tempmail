@@ -240,6 +240,8 @@ class OtpExtractorTest {
         // Issue #151: singkatan alamat >=4 huruf yang terbukti.
         assertNull(OtpExtractor.extract("Kode pos prov. Jawa Barat adalah 123456"))
         assertNull(OtpExtractor.extract("Kode pos kec. Cilebar adalah 123456"))
+        // Issue #154: "etc." 3 huruf yang terekspos ambang baru.
+        assertNull(OtpExtractor.extract("Kode pos etc. 123456"))
     }
 
     @Test
