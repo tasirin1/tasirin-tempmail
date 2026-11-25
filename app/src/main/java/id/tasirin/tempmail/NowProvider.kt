@@ -27,6 +27,9 @@ class NowProvider : MailProvider {
     private var csrf: String = ""
     @Volatile
     private var alamatAktif: String = ""
+    // Ditulis thread latar, dibaca UI thread lewat alamatServer() —
+    // wajib @Volatile seperti field sesi lain (issue #41).
+    @Volatile
     private var alamatDariServer: String? = null
     // Disentuh thread polling dan thread detail — wajib tersinkron.
     private val isiTerakhir = java.util.Collections.synchronizedMap(HashMap<String, MailDetail>())
