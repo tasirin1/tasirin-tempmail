@@ -201,7 +201,9 @@
             android:id="@+id/btnSegarkan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Segarkan" />
+            android:backgroundTint="@color/biru_utama"
+            android:text="Segarkan"
+            android:textColor="@color/putih" />
     </LinearLayout>
 
     <TextView
