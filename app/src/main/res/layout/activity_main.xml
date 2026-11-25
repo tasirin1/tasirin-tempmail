@@ -31,7 +31,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tasirin TempMail"
+                android:text="@string/judul_app"
                 android:textColor="@color/biru_gelap"
                 android:textSize="21sp"
                 android:textStyle="bold" />
@@ -40,7 +40,7 @@
                 android:id="@+id/tvSubjudul"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Email sekali pakai • tempmail.plus"
+                android:text="@string/subjudul_awal"
                 android:textColor="@color/teks_redup"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -58,7 +58,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Layanan:"
+            android:text="@string/label_layanan"
             android:textColor="@color/teks_utama"
             android:textStyle="bold" />
 
@@ -72,7 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="Alamat email kamu:"
+            android:text="@string/label_alamat"
             android:textColor="@color/teks_utama"
             android:textStyle="bold" />
 
@@ -101,7 +101,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:backgroundTint="@color/biru_utama"
-                android:text="Salin Email"
+                android:text="@string/tombol_salin_email"
                 android:textColor="@color/putih" />
 
             <Button
@@ -111,7 +111,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:backgroundTint="@color/biru_utama"
-                android:text="Ganti Email"
+                android:text="@string/tombol_ganti_email"
                 android:textColor="@color/putih" />
         </LinearLayout>
 
@@ -127,7 +127,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:text="Pakai nama sendiri:"
+                android:text="@string/label_nama_sendiri"
                 android:textColor="@color/teks_utama"
                 android:textStyle="bold" />
 
@@ -151,7 +151,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:hint="nama sendiri"
+                    android:hint="@string/petunjuk_nama"
                     android:inputType="text" />
 
                 <Button
@@ -159,7 +159,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/biru_utama"
-                    android:text="Pakai"
+                    android:text="@string/tombol_pakai"
                     android:textColor="@color/putih" />
             </LinearLayout>
         </LinearLayout>
@@ -180,7 +180,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Kode verifikasi terdeteksi:"
+            android:text="@string/label_kode"
             android:textColor="@color/putih" />
 
         <TextView
@@ -200,7 +200,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="8dp"
             android:backgroundTint="@color/putih"
-            android:text="Salin Kode"
+            android:text="@string/tombol_salin_kode"
             android:textColor="@color/biru_gelap" />
     </LinearLayout>
 
@@ -217,7 +217,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Menunggu cek pertama…"
+            android:text="@string/status_awal"
             android:textColor="@color/teks_redup"
             android:textSize="12sp" />
 
@@ -226,7 +226,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:backgroundTint="@color/biru_utama"
-            android:text="Segarkan"
+            android:text="@string/tombol_segarkan"
             android:textColor="@color/putih" />
     </LinearLayout>
 
@@ -234,7 +234,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Kotak masuk"
+        android:text="@string/judul_kotak_masuk"
         android:textColor="@color/teks_utama"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -255,7 +255,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="Belum ada email masuk. Kotak masuk dicek otomatis tiap 8 detik."
+        android:text="@string/kotak_kosong"
         android:textColor="@color/teks_redup" />
 
 </LinearLayout>

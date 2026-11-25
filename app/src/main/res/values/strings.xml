@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Tasirin TempMail</string>
+    <string name="judul_app">Tasirin TempMail</string>
+    <string name="subjudul_awal">Email sekali pakai • tempmail.plus</string>
+    <string name="label_layanan">Layanan:</string>
+    <string name="label_alamat">Alamat email kamu:</string>
+    <string name="tombol_salin_email">Salin Email</string>
+    <string name="tombol_ganti_email">Ganti Email</string>
+    <string name="label_nama_sendiri">Pakai nama sendiri:</string>
+    <string name="petunjuk_nama">nama sendiri</string>
+    <string name="tombol_pakai">Pakai</string>
+    <string name="label_kode">Kode verifikasi terdeteksi:</string>
+    <string name="tombol_salin_kode">Salin Kode</string>
+    <string name="status_awal">Menunggu cek pertama…</string>
+    <string name="tombol_segarkan">Segarkan</string>
+    <string name="judul_kotak_masuk">Kotak masuk</string>
+    <string name="kotak_kosong">Belum ada email masuk. Kotak masuk dicek otomatis tiap 8 detik.</string>
 </resources>
