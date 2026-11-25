@@ -5,6 +5,9 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 // Hasil satu permintaan HTTP: kode status + isi body teks.
 data class HasilHttp(val kode: Int, val body: String)
@@ -89,9 +92,15 @@ class HttpSesi {
                                 // disimpan dan dikirim selamanya (issue #45).
                                 val attrs = bagian.drop(1).joinToString(";").lowercase()
                                 val maxAge = reMaxAge.find(attrs)?.groupValues?.get(1)?.toLongOrNull()
+                                // Expires diuraikan sungguhan (dua format
+                                // umum) — pola lama hanya mengenali satu
+                                // string epoch yang persis, format lampau
+                                // lain lolos dan kuki basi disimpan terus
+                                // (issue #89).
+                                val expires = reExpires.find(attrs)?.groupValues?.get(1)?.trim()
                                 val mati = isiKuki.isEmpty() ||
                                     (maxAge != null && maxAge <= 0) ||
-                                    attrs.contains("expires=thu, 01 jan 1970")
+                                    (expires != null && expiresSudahLewat(expires))
                                 if (mati) kuki.remove(namaKuki) else kuki[namaKuki] = isiKuki
                             }
                         }
@@ -134,8 +143,28 @@ class HttpSesi {
         return sb.toString()
     }
 
+    // Benarkah nilai Expires (sudah lowercase dari attrs) ada di masa
+    // lalu? Dua format umum: RFC 1123 "thu, 01 jan 1970 00:00:00 gmt"
+    // dan Netscape bertanda hubung "thu, 01-jan-1970 00:00:00 gmt".
+    // Tidak teruraikan = anggap belum lewat (perilaku aman lama).
+    private fun expiresSudahLewat(nilai: String): Boolean {
+        for (pola in arrayOf("EEE, dd MMM yyyy HH:mm:ss 'gmt'", "EEE, dd-MMM-yyyy HH:mm:ss 'gmt'")) {
+            try {
+                val fmt = SimpleDateFormat(pola, Locale.US)
+                fmt.timeZone = TimeZone.getTimeZone("GMT")
+                fmt.isLenient = false
+                val t = fmt.parse(nilai) ?: continue
+                return t.time < System.currentTimeMillis()
+            } catch (e: Exception) {
+                // Coba format berikutnya.
+            }
+        }
+        return false
+    }
+
     companion object {
         private val reMaxAge = Regex("""max-age\s*=\s*(-?\d+)""")
+        private val reExpires = Regex("""expires\s*=\s*([^;]+)""")
         private const val BATAS_BODY = 2_000_000
         private const val UA_PERAMBAN =
             "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
