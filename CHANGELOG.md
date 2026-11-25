@@ -4,6 +4,37 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.5] - 2026-11-25
+
+Hasil Maraton-11 (Audit-11: 6 temuan, issue #129–#134 — semuanya
+Rendah: sisa stabilitas id sintetis, satu cabang polling yang belum
+tergerbang, dan penyempurnaan penjaga kode pos jalur cadangan).
+
+### Fixed
+
+- tempmail.plus: posisi pada id sintetis email tanpa `mail_id`
+  kini dihitung dari EKOR daftar — email baru yang menumpuk di
+  kepala tidak lagi menggeser id item lama, jadi kode lama tidak
+  tersalin ulang menimpa kode yang lebih baru (issue #129).
+- Cabang segera penjadwal refresh tertunda ikut digerbang keadaan
+  polling — penyelesaian refresh yang tiba sesudah layar dijeda
+  tidak lagi melahirkan satu pengambilan di latar (issue #130).
+- Penjaga OTP jalur cadangan disempurnakan: semua kandidat
+  ditelusuri (kandidat pertama yang ditolak penjaga tidak lagi
+  membunuh kandidat sah berikutnya); label kode pos berbasis
+  frasa — label berjarak ("kode pos anda adalah 123456") ikut
+  dikenali, label milik angka lain tidak menelan kode berikutnya;
+  kata "zip" di dalam unzip/gzip atau sebagai kata biasa bukan
+  lagi label, label telanjang ZIP/Postal wajib titik dua; sufiks
+  posesif Sunda "-na" ikut dikenali (issue #131, #132, #133,
+  #134).
+
+### Tests
+
+- Tes baru: kandidat sah sesudah kode pos tetap ketemu; kode pos
+  berjarak dilewati di jalur cadangan; "unzip"/"file zip" tidak
+  menelan kode; "kode posna" dilewati.
+
 ## [0.8.4] - 2026-11-25
 
 Hasil Maraton-10 (Audit-10: 4 temuan, issue #125–#128 — semuanya
