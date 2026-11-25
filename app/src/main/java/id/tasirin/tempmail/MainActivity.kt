@@ -41,6 +41,10 @@ class MainActivity : AppCompatActivity() {
 
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executors.newSingleThreadExecutor()
+
+    // Executor khusus baca email: ketukan pengguna tidak mengantre di
+    // belakang polling yang bisa makan 2x timeout (issue #8).
+    private val executorDetail = Executors.newSingleThreadExecutor()
     private val sedangCek = AtomicBoolean(false)
 
     private var alamatSekarang: String = ""
@@ -167,6 +171,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         executor.shutdownNow()
+        executorDetail.shutdownNow()
         super.onDestroy()
     }
 
@@ -272,7 +277,7 @@ class MainActivity : AppCompatActivity() {
     private fun bukaDetail(item: MailItem) {
         val email = alamatSekarang
         toast("Membuka email…")
-        executor.execute {
+        executorDetail.execute {
             try {
                 val detail = TempMailApi.fetchDetail(email, item.id)
                 val kode = OtpExtractor.extract(detail.subject + "\n" + detail.text)
