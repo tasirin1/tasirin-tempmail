@@ -19,6 +19,11 @@ object TempMailApi {
 
     private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
 
+    // Encoder segmen path URL: URLEncoder adalah encoder query (spasi
+    // jadi "+"), sedangkan di path "+" berarti plus harfiah — id
+    // berkarakter khusus akan terkirim sebagai id berbeda (issue #74).
+    private fun encPath(s: String): String = enc(s).replace("+", "%20")
+
     // SATU tumpukan HTTP untuk semua layanan (issue #52): dulu kelas ini
     // punya klien sendiri dengan UA identitas aplikasi polos dan batas
     // body terpisah. Kini lewat HttpSesi — kebijakan timeout, batas body
@@ -62,7 +67,7 @@ object TempMailApi {
     }
 
     fun fetchDetail(email: String, mailId: String): MailDetail {
-        val json = getJson("$BASE/api/mails/${enc(mailId)}?email=${enc(email)}&epin=")
+        val json = getJson("$BASE/api/mails/${encPath(mailId)}?email=${enc(email)}&epin=")
         // Konsisten dengan fetchInbox (issue #10): penolakan layanan adalah
         // kegagalan yang jelas, bukan email kosong (issue #29).
         if (json.has("result") && !json.optBoolean("result", true)) {
