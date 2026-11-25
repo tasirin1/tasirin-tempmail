@@ -68,14 +68,19 @@ object TempMailApi {
         val hasil = ArrayList<MailItem>()
         for (i in 0 until list.length()) {
             val m = list.optJSONObject(i) ?: continue
-            hasil.add(
-                MailItem(
-                    id = idString(m.opt("mail_id")),
-                    from = m.optString("from_mail"),
-                    subject = m.optString("subject"),
-                    time = m.optString("time")
-                )
-            )
+            val dari = m.optString("from_mail")
+            val subjek = m.optString("subject")
+            val waktu = m.optString("time")
+            // Item tanpa mail_id TIDAK boleh berbagi id "" bersama
+            // (detail membuka email yang salah, penanda UI bertabrakan)
+            // — pakai kunci sidik isi, pola #42/#111 (issue #120).
+            val idMentah = idString(m.opt("mail_id"))
+            val idPesan = if (idMentah.isBlank()) {
+                "tanpa-id-" + (dari + "|" + subjek + "|" + waktu).hashCode()
+            } else {
+                idMentah
+            }
+            hasil.add(MailItem(id = idPesan, from = dari, subject = subjek, time = waktu))
         }
         return hasil
     }
