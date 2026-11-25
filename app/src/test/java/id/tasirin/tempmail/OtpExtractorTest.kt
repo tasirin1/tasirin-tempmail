@@ -157,6 +157,18 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kodePosPenghubungPanjangDilewati() {
+        // Issue #137: frasa dengan penghubung panjang (>32 karakter)
+        // tetap dikenali penjaga jalur cadangan.
+        assertNull(
+            OtpExtractor.extract("Kode pos tercatat di dalam sistem kami ya: 123456")
+        )
+        assertNull(
+            OtpExtractor.extract("ZIP code associated with your billing address: 123456")
+        )
+    }
+
+    @Test
     fun kodePosBerjarakDilewatiDiJalurCadangan() {
         // Issue #132: label berjarak kata penghubung ikut dikenali
         // di jalur cadangan, selaras jalur konteks.

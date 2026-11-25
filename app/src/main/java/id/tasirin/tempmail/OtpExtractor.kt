@@ -109,14 +109,16 @@ object OtpExtractor {
     private val polaLabelTelanjang = Regex("""(?i)\b(?:zip|postal)[\s]*:""")
 
     // Angka ini milik frasa kode pos? Cari frasa kode pos terakhir
-    // di jendela pandang-balik (40 karakter — label boleh berjarak,
-    // mis. "kode pos anda adalah 123456", issue #132), lalu angka
-    // ini milik frasa itu HANYA bila di antaranya tidak ada angka
-    // lain (angka lain = labelnya milik angka itu) dan tidak ada
-    // kata pemicu lain (pemicu lain = angkanya milik pemicu itu).
-    // Logika yang sama dengan penjaga jalur konteks.
+    // di jendela pandang-balik (label boleh berjarak, mis. "kode
+    // pos anda adalah 123456", issue #132), lalu angka ini milik
+    // frasa itu HANYA bila di antaranya tidak ada angka lain (angka
+    // lain = labelnya milik angka itu) dan tidak ada kata pemicu
+    // lain (pemicu lain = angkanya milik pemicu itu). Logika yang
+    // sama dengan penjaga jalur konteks. Jendela 120 karakter
+    // (issue #137): 40 kemarin memotong frasa yang penghubungnya
+    // panjang ("Kode pos tercatat di dalam sistem kami ya: …").
     private fun berlabelKodePos(teks: String, awalAngka: Int): Boolean {
-        val sebelum = teks.substring(maxOf(0, awalAngka - 40), awalAngka)
+        val sebelum = teks.substring(maxOf(0, awalAngka - 120), awalAngka)
         val cocok = listOfNotNull(
             polaKodePos.findAll(sebelum).lastOrNull(),
             polaKodePosInggris.findAll(sebelum).lastOrNull(),
