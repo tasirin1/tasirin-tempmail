@@ -5,7 +5,7 @@
     android:background="@color/latar"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="24dp">
 
     <!-- Kepala: logo + nama aplikasi -->
     <LinearLayout
@@ -49,10 +49,10 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="18dp"
         android:background="@drawable/bg_card"
         android:orientation="vertical"
-        android:padding="14dp">
+        android:padding="18dp">
 
         <TextView
             android:layout_width="wrap_content"
