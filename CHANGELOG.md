@@ -4,6 +4,32 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.10] - 2026-11-25
+
+Hasil Maraton-16 (Audit-16: 4 temuan, issue #153–#156 — semuanya
+Rendah: konstanta FNV yang keliru tulis dan sisa kalibrasi daftar
+tertutup serta elipsis; Area B bersih empat ronde berturut-turut).
+
+### Fixed
+
+- tempmail.plus: konstanta basis fnv1a dibetulkan ke nilai
+  FNV-1a standar 0x811C9DC5 — nilai awal sebelumnya salah tulis
+  (0xE9A4CA31) sehingga klaim "FNV-1a" tidak cocok dengan
+  rujukan mana pun, walau sifat pemisah tabrakannya tetap
+  bekerja (issue #153).
+- Penjaga OTP: "etc." masuk daftar singkatan bukan-batas —
+  terekspos oleh ambang 3 huruf baru (issue #154); penghubung
+  baris ditambah yaitu/yakni/namely (issue #155); penilaian
+  batas kalimat kini melompati rentetan titik, jadi kalimat
+  yang berakhir elipsis tetap memutus ikatan label
+  (issue #156).
+
+### Tests
+
+- Tes baru: "etc." bukan batas; penghubung yaitu/yakni
+  sesudah baris baru tidak memutus ikatan; elipsis sesudah kata
+  penutup tetap batas kalimat.
+
 ## [0.8.9] - 2026-11-25
 
 Hasil Maraton-15 (Audit-15: 5 temuan, issue #148–#152 — semuanya
