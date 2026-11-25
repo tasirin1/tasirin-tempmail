@@ -244,16 +244,20 @@ class MainActivity : AppCompatActivity() {
                     sedangCek.set(false)
                     if (email != alamatSekarang) return@runOnUiThread
                     jedaPollingMs = 8000L
-                    itemInbox = items
-                    dataInbox.clear()
-                    for (m in items) {
-                        val baris = HashMap<String, String>()
-                        baris["judul"] = m.subject.ifBlank { "(tanpa judul)" }
-                        baris["dari"] = listOf(m.from, m.time).filter { it.isNotBlank() }.joinToString(" · ")
-                        dataInbox.add(baris)
+                    // Daftar hanya dibangun ulang bila isinya benar-benar
+                    // berubah — mayoritas polling isinya sama (issue #20).
+                    if (items != itemInbox) {
+                        itemInbox = items
+                        dataInbox.clear()
+                        for (m in items) {
+                            val baris = HashMap<String, String>()
+                            baris["judul"] = m.subject.ifBlank { "(tanpa judul)" }
+                            baris["dari"] = listOf(m.from, m.time).filter { it.isNotBlank() }.joinToString(" · ")
+                            dataInbox.add(baris)
+                        }
+                        adapterInbox.notifyDataSetChanged()
+                        tvKosong.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
                     }
-                    adapterInbox.notifyDataSetChanged()
-                    tvKosong.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
                     val jam = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
                     tvStatus.text = "Dicek terakhir $jam — ${items.size} email"
                     inboxPernahDimuat = true
