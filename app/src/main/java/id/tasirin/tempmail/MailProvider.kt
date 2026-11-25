@@ -64,6 +64,12 @@ class PlusProvider : MailProvider {
     }
 
     override fun alamatCustom(namaBersih: String, domain: String): String {
+        // Konsisten dengan alamatAcak: domain di luar daftar resmi
+        // ditolak, bukan dirangkai buta jadi alamat yang inbox-nya
+        // tidak akan pernah ada (issue #62).
+        if (domain !in AddressGenerator.DOMAINS) {
+            throw IllegalStateException("Domain tidak didukung tempmail.plus: $domain")
+        }
         return "$namaBersih@$domain"
     }
 
