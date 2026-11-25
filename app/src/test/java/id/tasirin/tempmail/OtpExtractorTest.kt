@@ -201,6 +201,16 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kalimatBaruHurufKecilSesudahKataPanjangAdalahBatas() {
+        // Issue #150: gaya informal — kalimat OTP berhuruf kecil
+        // sesudah titik, kata penutup sebelumnya panjang.
+        assertEquals(
+            "445566",
+            OtpExtractor.extract("Kode pos tercatat. gunakan 445566 untuk masuk.")
+        )
+    }
+
+    @Test
     fun kataPenutupTigaHurufUmumAdalahBatas() {
         // Issue #149: kalimat berakhir "ini"/"itu" adalah batas
         // kalimat sungguhan — OTP kalimat berikut tidak tertelan.

@@ -192,6 +192,12 @@ object OtpExtractor {
                     if (berikut == '\n' || berikut.isUpperCase() || berikut.isDigit()) {
                         return true
                     }
+                    // Kalimat baru berhuruf kecil (gaya email
+                    // informal) ikut dihitung bila kata sebelumnya
+                    // panjang (>=5 huruf): singkatan sepanjang itu
+                    // yang diikuti kata kecil jauh lebih jarang
+                    // daripada kalimat informal (issue #150).
+                    if (berikut.isLowerCase() && kata.length >= 5) return true
                 }
             }
         }
