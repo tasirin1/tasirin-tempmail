@@ -187,16 +187,20 @@ class MainActivity : AppCompatActivity() {
                 val terbaru = items.firstOrNull()
                 if (terbaru != null && terbaru.id != idTerakhirDicek) {
                     kodeBaru = OtpExtractor.extract(terbaru.subject)
+                    var tuntas = kodeBaru != null
                     if (kodeBaru == null) {
-                        // Gagal ambil isi email tidak boleh menggagalkan daftar inbox.
+                        // Gagal ambil isi email tidak boleh menggagalkan daftar inbox,
+                        // tapi emailnya juga BELUM tuntas dicek: jangan ditandai,
+                        // supaya dicoba lagi pada polling berikutnya (issue #1).
                         try {
                             val detail = TempMailApi.fetchDetail(email, terbaru.id)
                             kodeBaru = OtpExtractor.extract(terbaru.subject + "\n" + detail.text)
+                            tuntas = true
                         } catch (e: Exception) {
                             kodeBaru = null
                         }
                     }
-                    idTerakhirDicek = terbaru.id
+                    if (tuntas) idTerakhirDicek = terbaru.id
                 }
                 val kodeFinal = kodeBaru
                 val pernahDimuat = inboxPernahDimuat
