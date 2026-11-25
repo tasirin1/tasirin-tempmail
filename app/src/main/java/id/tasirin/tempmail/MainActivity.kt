@@ -404,6 +404,13 @@ class MainActivity : AppCompatActivity() {
         adapterInbox.notifyDataSetChanged()
         tvKosong.visibility = View.VISIBLE
         sembunyikanKode()
+        // Selaraskan spinner domain dengan alamat yang baru dipasang,
+        // dengan penjaga yang sama seperti muatDomain — alur ganti
+        // layanan dulu melewatkan ini (issue #63).
+        val siapSebelum = spinnerSiap
+        spinnerSiap = false
+        sesuaikanPilihanDomain(alamat)
+        spinnerSiap = siapSebelum
         refreshInbox()
     }
 
