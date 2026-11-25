@@ -38,6 +38,15 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun tahunSesudahKataPemicuBukanKode() {
+        assertNull(OtpExtractor.extract("Verification needed. Copyright 2026 PT X"))
+        assertEquals(
+            "778899",
+            OtpExtractor.extract("Kode berlaku sampai 2026. Kode kamu 778899 ya.")
+        )
+    }
+
+    @Test
     fun kodePanjangTidakTerpotong() {
         // Angka 10 digit bukan kode 8 digit yang terpotong (issue #5).
         assertNull(OtpExtractor.extract("Your verification code is 1234567890"))

@@ -21,7 +21,12 @@ object OtpExtractor {
     // Kembalikan kode pertama yang ketemu menurut urutan prioritas, atau null.
     fun extract(teks: String): String? {
         if (teks.isBlank()) return null
-        polaKonteks.find(teks)?.let { return it.groupValues[1] }
+        for (m in polaKonteks.findAll(teks)) {
+            val v = m.groupValues[1]
+            // Tahun sesudah kata pemicu bukan kode — lewati, cari berikutnya.
+            if (v.length == 4 && v.toInt() in 1900..2099) continue
+            return v
+        }
         polaTerpencar.find(teks)?.let { return it.groupValues[1] + it.groupValues[2] }
         pola6.find(teks)?.let { return it.groupValues[1] }
         return null
