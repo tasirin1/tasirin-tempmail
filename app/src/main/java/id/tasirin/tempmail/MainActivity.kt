@@ -46,8 +46,9 @@ class MainActivity : AppCompatActivity() {
     private var spinnerSiap = false
     private var polling = false
 
-    // Id email terbaru yang isinya sudah diperiksa untuk kode verifikasi.
-    private var idTerakhirDicek: String? = null
+    // Id semua email yang isinya sudah tuntas diperiksa untuk kode
+    // verifikasi. Semua email diperiksa, bukan cuma yang teratas (issue #2).
+    private val idSudahDicek = mutableSetOf<String>()
     private var inboxPernahDimuat = false
 
     private val dataInbox = ArrayList<HashMap<String, String>>()
@@ -166,7 +167,7 @@ class MainActivity : AppCompatActivity() {
         tvEmail.text = alamat
         getSharedPreferences("tempmail", Context.MODE_PRIVATE)
             .edit().putString("email", alamat).apply()
-        idTerakhirDicek = null
+        idSudahDicek.clear()
         inboxPernahDimuat = false
         itemInbox = emptyList()
         dataInbox.clear()
@@ -184,23 +185,32 @@ class MainActivity : AppCompatActivity() {
             try {
                 val items = TempMailApi.fetchInbox(email)
                 var kodeBaru: String? = null
-                val terbaru = items.firstOrNull()
-                if (terbaru != null && terbaru.id != idTerakhirDicek) {
-                    kodeBaru = OtpExtractor.extract(terbaru.subject)
-                    var tuntas = kodeBaru != null
-                    if (kodeBaru == null) {
+                // Periksa SEMUA email yang belum tuntas dicek, bukan cuma yang
+                // teratas — email kode yang bukan teratas pun ketemu (issue #2).
+                for (m in items) {
+                    if (m.id in idSudahDicek) continue
+                    var kode = OtpExtractor.extract(m.subject)
+                    var tuntas = kode != null
+                    if (kode == null) {
                         // Gagal ambil isi email tidak boleh menggagalkan daftar inbox,
                         // tapi emailnya juga BELUM tuntas dicek: jangan ditandai,
                         // supaya dicoba lagi pada polling berikutnya (issue #1).
                         try {
-                            val detail = TempMailApi.fetchDetail(email, terbaru.id)
-                            kodeBaru = OtpExtractor.extract(terbaru.subject + "\n" + detail.text)
+                            val detail = TempMailApi.fetchDetail(email, m.id)
+                            kode = OtpExtractor.extract(m.subject + "\n" + detail.text)
                             tuntas = true
                         } catch (e: Exception) {
-                            kodeBaru = null
+                            kode = null
                         }
                     }
-                    if (tuntas) idTerakhirDicek = terbaru.id
+                    if (tuntas) {
+                        idSudahDicek.add(m.id)
+                        // Jaga ukuran penanda: simpan 50 id terakhir saja.
+                        while (idSudahDicek.size > 50) {
+                            idSudahDicek.remove(idSudahDicek.first())
+                        }
+                        if (kode != null && kodeBaru == null) kodeBaru = kode
+                    }
                 }
                 val kodeFinal = kodeBaru
                 val pernahDimuat = inboxPernahDimuat
