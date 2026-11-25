@@ -157,6 +157,19 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun barisBaruSesudahLabelBukanPemutus() {
+        // Issue #141: label di satu baris, nilainya di baris
+        // berikut — ikatan label tetap berlaku.
+        assertNull(OtpExtractor.extract("Postal code:\n123456"))
+        assertNull(OtpExtractor.extract("Kode pos:\n123 456"))
+        // Kalimat yang berakhir di ujung baris tetap pemutus.
+        assertEquals(
+            "445566",
+            OtpExtractor.extract("Kode pos dicatat\nGunakan 445566 untuk masuk")
+        )
+    }
+
+    @Test
     fun titikSingkatanBukanBatasKalimat() {
         // Issue #140: titik singkatan di antara frasa dan angka
         // tidak memutus ikatan label.

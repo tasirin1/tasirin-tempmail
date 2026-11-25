@@ -166,8 +166,12 @@ object OtpExtractor {
     }
 
     // Pemutus ikatan label di jalur cadangan: batas kalimat, atau
-    // baris baru (sementara masih tanpa syarat — lihat #141).
+    // baris baru yang didahului kata nyata di baris yang sama.
+    // Baris baru tepat sesudah label ("Postal code:\n123456")
+    // adalah pemisah label-nilai, BUKAN pemutus (issue #141).
     private fun adaPemutusIkatan(antara: String): Boolean {
-        return adaBatasKalimat(antara) || '\n' in antara
+        if (adaBatasKalimat(antara)) return true
+        val idx = antara.indexOf('\n')
+        return idx >= 0 && antara.substring(0, idx).any { it.isLetter() }
     }
 }
