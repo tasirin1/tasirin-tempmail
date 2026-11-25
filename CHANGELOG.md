@@ -4,6 +4,39 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.8] - 2026-11-25
+
+Hasil Maraton-14 (Audit-14: 5 temuan, issue #143–#147 — semuanya
+Rendah: tabrakan sidik id sintetis dan kalibrasi pemutus ikatan
+label kode pos; Area B bersih dua ronde berturut-turut).
+
+### Fixed
+
+- tempmail.plus: sidik id sintetis digandakan — dua hash dari
+  susunan kolom berbeda plus panjang tripel. Satu hashCode
+  32-bit saja bisa bertabrakan antar email berbeda (subjek "Aa"
+  vs "BB") dan email kedua lalu tidak pernah dipindai; kini
+  tabrakan butuh kedua hash sekaligus (issue #143).
+- Penjaga OTP: deteksi batas kalimat menjadi struktural — titik
+  hanya batas kalimat bila kata sebelumnya minimal 4 huruf,
+  bukan singkatan, dan diikuti huruf kapital/angka/akhir teks;
+  singkatan di luar daftar (dsb./dll./tgl./PT.) tidak lagi
+  memutus ikatan label secara keliru (issue #144). Titik tanpa
+  kata sebelumnya ("Kode pos.", elipsis) bukan batas kalimat
+  (issue #145). Penjaga konteks kini memakai pemutus ikatan
+  yang sama dengan jalur cadangan termasuk aturan baris baru
+  (issue #146), dan baris baru memutus ikatan juga bila kata
+  nyata berada sesudahnya — label yang menutup barisnya sendiri
+  tidak lagi mengikat kalimat OTP di baris berikut
+  (issue #147).
+
+### Tests
+
+- Tes baru: singkatan di luar daftar bukan batas; titik
+  menempel sesudah frasa bukan batas; frasa pos baris
+  sebelumnya tidak menelan OTP konteks; label penutup baris
+  tidak mengikat kalimat baris berikut.
+
 ## [0.8.7] - 2026-11-25
 
 Hasil Maraton-13 (Audit-13: 4 temuan, issue #139–#142 — semuanya
