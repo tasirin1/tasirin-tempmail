@@ -276,7 +276,15 @@ class IsProvider : MailProvider {
         var kursorBaru = idTerbesar
         val dikenalBatch = HashSet(idDikenal)
         for (i in 0 until (arr?.length() ?: 0)) {
-            val m = arr!!.getJSONObject(i)
+            // Satu elemen bukan objek dilewati saja (konsisten dengan
+            // tempmail.now #109): JSONException mentahnya kemarin
+            // menggagalkan SELURUH pengambilan dan bocor ke pengguna
+            // (issue #119). Pola dua fase menjaga sisanya tetap aman.
+            val m = try {
+                arr!!.getJSONObject(i)
+            } catch (e: Exception) {
+                continue
+            }
             // Kolom from berbentuk string JSON: {"name":..., "address":...}
             var dari = m.optString("from")
             try {
