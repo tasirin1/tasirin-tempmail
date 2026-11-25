@@ -127,14 +127,32 @@ class NowProvider : MailProvider {
         if (alamat.isNotBlank() && alamatAktif.isNotBlank() && alamat != alamatAktif) {
             return@synchronized emptyList()
         }
-        // Satu kali pemulihan sesi: kegagalan pertama dianggap sesi mati
-        // → buang sesi, buat baru, coba lagi sekali. Kegagalan kedua
-        // dilempar apa adanya (jaringan/server memang bermasalah).
+        // Satu kali pemulihan sesi — HANYA untuk penolakan sesi oleh
+        // server (HTTP 401/403/404). Perbaikan #37 semula menangkap
+        // SEMUA kegagalan sebagai sesi mati, sehingga satu timeout
+        // jaringan biasa membuang alamat yang sehat, dan alamat
+        // penggantinya tidak pernah dilaporkan ke UI — inbox mati
+        // permanen diam-diam (issue #80). Kegagalan jaringan, HTTP
+        // lain, dan respons rusak dilempar apa adanya TANPA merusak
+        // sesi: pemanggil menampilkan error dan mencoba lagi nanti.
         try {
             ambilInboxSekali()
-        } catch (e: Exception) {
-            resetSesi()
-            ambilInboxSekali()
+        } catch (e: IllegalStateException) {
+            val kode = Regex("HTTP (\\d+)").find(e.message ?: "")
+                ?.groupValues?.get(1)?.toIntOrNull()
+            if (kode == 401 || kode == 403 || kode == 404) {
+                resetSesi()
+                val hasilBaru = ambilInboxSekali()
+                // Alamat sesi baru WAJIB dilaporkan: tanpa ini UI tetap
+                // menampilkan alamat lama yang mati dan polling
+                // berikutnya kena penjaga alamat basi selamanya (#80).
+                if (alamatAktif.isNotBlank() && alamatAktif != alamat) {
+                    alamatDariServer = alamatAktif
+                }
+                hasilBaru
+            } else {
+                throw e
+            }
         }
     }
 
