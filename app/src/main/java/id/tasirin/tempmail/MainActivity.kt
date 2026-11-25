@@ -24,6 +24,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.Collections
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
 // Layar utama: alamat email sekali pakai (tempmail.plus) + kotak masuk
@@ -202,7 +203,15 @@ class MainActivity : AppCompatActivity() {
         if (!sedangCek.compareAndSet(false, true)) return
         val email = alamatSekarang
         val gen = generasiAlamat
-        executor.execute {
+        try {
+            executor.execute { jalankanRefresh(email, gen) }
+        } catch (e: RejectedExecutionException) {
+            // Activity sedang dihancurkan — jangan crash, bebaskan penanda.
+            sedangCek.set(false)
+        }
+    }
+
+    private fun jalankanRefresh(email: String, gen: Int) {
             try {
                 val items = TempMailApi.fetchInbox(email)
                 var kodeBaru: String? = null
@@ -281,14 +290,20 @@ class MainActivity : AppCompatActivity() {
                     tvStatus.text = "Gagal cek inbox: ${e.message ?: "jaringan bermasalah"}"
                 }
             }
-        }
     }
 
     // Ambil isi lengkap satu email lalu tampilkan sebagai dialog.
     private fun bukaDetail(item: MailItem) {
         val email = alamatSekarang
         toast("Membuka email…")
-        executorDetail.execute {
+        try {
+            executorDetail.execute { jalankanBukaDetail(email, item) }
+        } catch (e: RejectedExecutionException) {
+            // Activity sedang dihancurkan — abaikan dengan aman (issue #24).
+        }
+    }
+
+    private fun jalankanBukaDetail(email: String, item: MailItem) {
             try {
                 val detail = TempMailApi.fetchDetail(email, item.id)
                 val kode = OtpExtractor.extract(detail.subject + "\n" + detail.text)
@@ -316,7 +331,6 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 runOnUiThread { toast("Gagal membuka: ${e.message ?: "jaringan bermasalah"}") }
             }
-        }
     }
 
     private fun tampilkanKode(kode: String) {
