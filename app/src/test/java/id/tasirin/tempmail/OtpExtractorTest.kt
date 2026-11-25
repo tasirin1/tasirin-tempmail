@@ -157,6 +157,20 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun batasKalimatMemutusIkatanLabel() {
+        // Issue #138: frasa kode pos di kalimat sebelumnya tidak
+        // menelan OTP tanpa pemicu di kalimat ini.
+        assertEquals(
+            "445566",
+            OtpExtractor.extract("Kode pos dicatat. Gunakan 445566 untuk masuk.")
+        )
+        assertEquals(
+            "445566",
+            OtpExtractor.extract("Kode pos dicatat.\nGunakan 445566 untuk masuk.")
+        )
+    }
+
+    @Test
     fun kodePosPenghubungPanjangDilewati() {
         // Issue #137: frasa dengan penghubung panjang (>32 karakter)
         // tetap dikenali penjaga jalur cadangan.

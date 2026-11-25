@@ -125,7 +125,12 @@ object OtpExtractor {
             polaLabelTelanjang.findAll(sebelum).lastOrNull()
         ).maxByOrNull { it.range.last } ?: return false
         val antara = sebelum.substring(cocok.range.last + 1)
+        // Batas kalimat juga memutus ikatan label (issue #138):
+        // frasa pos di kalimat SEBELUMNYA tidak memiliki angka di
+        // kalimat ini — tanpa pemutus ini OTP tanpa pemicu sesudah
+        // kalimat kode pos tertelan penjaga.
         return !antara.any { it.isDigit() } &&
-            polaPemicu.find(antara) == null
+            polaPemicu.find(antara) == null &&
+            !antara.any { it == '.' || it == '!' || it == '?' || it == '\n' }
     }
 }
