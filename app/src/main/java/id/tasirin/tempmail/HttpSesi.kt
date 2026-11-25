@@ -35,6 +35,12 @@ class HttpSesi {
         return kirim("POST", url, body, "application/x-www-form-urlencoded", headerTambahan)
     }
 
+    // POST dengan body JSON mentah — pembuat token dan API GraphQL
+    // DropMail menolak body form (HTTP 400), jadi jalur ini perlu ada.
+    fun postJson(url: String, body: String, headerTambahan: Map<String, String> = emptyMap()): HasilHttp {
+        return kirim("POST", url, body, "application/json", headerTambahan)
+    }
+
     private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
 
     // Satu permintaan pada satu waktu per sesi: baca-kuki dan
