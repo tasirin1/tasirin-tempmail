@@ -117,9 +117,16 @@ class NowProvider : MailProvider {
         isiTerakhir.clear()
         for (i in 0 until (arr?.length() ?: 0)) {
             val m = arr!!.getJSONObject(i)
-            val idPesan = if (m.isNull("id")) "" else m.opt("id").toString()
             val dari = m.optString("from_address")
             val subjek = m.optString("subject")
+            // Item tanpa id TIDAK boleh berbagi kunci cache yang sama
+            // (isi email bisa tertukar) — pakai kunci pengganti dari
+            // sidik isi email itu sendiri (issue #42).
+            val idPesan = if (m.isNull("id")) {
+                "tanpa-id-" + (dari + "|" + subjek + "|" + m.optString("body")).hashCode()
+            } else {
+                m.opt("id").toString()
+            }
             val waktu = m.optString("date").ifBlank { m.optString("received_at") }
             hasilList.add(MailItem(id = idPesan, from = dari, subject = subjek, time = waktu))
             isiTerakhir[idPesan] = MailDetail(
