@@ -84,8 +84,29 @@ object OtpExtractor {
             if (v.length == 4 && v.toInt() in 1900..2099) continue
             return v
         }
-        polaTerpencar.find(teks)?.let { return it.groupValues[1] + it.groupValues[2] }
-        pola6.find(teks)?.let { return it.groupValues[1] }
+        // Jalur cadangan ikut dijaga label kode pos (issue #128):
+        // kemarin penjaga hanya berlaku di jalur konteks, jadi
+        // "Kode pos: 123456" dan "Kode pos: 123 456" lolos sebagai OTP.
+        polaTerpencar.find(teks)?.let {
+            if (!berlabelKodePos(teks, it.range.first)) {
+                return it.groupValues[1] + it.groupValues[2]
+            }
+        }
+        pola6.find(teks)?.let {
+            if (!berlabelKodePos(teks, it.range.first)) {
+                return it.groupValues[1]
+            }
+        }
         return null
+    }
+
+    // Label kode pos tepat sebelum angka ini? (jendela pandang-balik
+    // pendek; label yang jauh dari angkanya urusan jalur konteks).
+    private val polaLabelKodePos =
+        Regex("""(?i)(?:kode[\s-]*pos(?:nya|ku|mu|kau|anda)?|(?:zip|postal)[\s-]*code|zip)[\s:]*$""")
+
+    private fun berlabelKodePos(teks: String, awalAngka: Int): Boolean {
+        val sebelum = teks.substring(maxOf(0, awalAngka - 20), awalAngka)
+        return polaLabelKodePos.containsMatchIn(sebelum)
     }
 }

@@ -143,6 +143,15 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kodePosEnamDigitDanTerpencarDilewati() {
+        // Issue #128: penjaga kode pos juga berlaku di jalur cadangan
+        // (pola 6 digit dan pola terpencar), bukan hanya jalur konteks.
+        assertNull(OtpExtractor.extract("Kode pos: 123456"))
+        assertNull(OtpExtractor.extract("Kode pos: 123 456"))
+        assertNull(OtpExtractor.extract("ZIP code: 123 456"))
+    }
+
+    @Test
     fun kodePosPosesifKuMuDilewati() {
         // Issue #124: sufiks posesif menempel -ku/-mu juga frasa
         // alamat — jangan tampil sebagai kode verifikasi.
