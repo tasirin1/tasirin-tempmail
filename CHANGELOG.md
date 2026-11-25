@@ -4,6 +4,19 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-11-25
+
+### Fixed
+
+- Perbaikan kosmetik dari uji perangkat di HP (screenshot 2026-11-25):
+- Kepala layar tidak lagi tertutup jam status bar di Android 15
+  (jarak aman sistem di tata letak akar).
+- Baris "Pakai nama sendiri" ditumpuk vertikal: pilihan domain
+  selebar kartu, kolom nama lega di baris bawahnya — hint
+  "nama sendiri" tidak terpotong lagi.
+- Tombol Segarkan kini biru dengan teks putih, seragam dengan
+  tombol lain (sebelumnya abu-abu bawaan).
+
 ## [0.6.0] - 2026-11-25
 
 ### Fixed
