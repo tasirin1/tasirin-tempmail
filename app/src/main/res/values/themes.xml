@@ -4,6 +4,6 @@
         <item name="colorPrimary">@color/biru_utama</item>
         <item name="colorPrimaryDark">@color/biru_gelap</item>
         <item name="colorAccent">@color/biru_utama</item>
-        <item name="android:windowBackground">@color/putih</item>
+        <item name="android:windowBackground">@color/latar</item>
     </style>
 </resources>

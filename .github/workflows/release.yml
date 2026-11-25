@@ -56,6 +56,7 @@ jobs:
           - Kotak masuk dicek otomatis tiap 8 detik selama aplikasi terbuka; ketuk email untuk membaca isinya.
           - Kode verifikasi (OTP) terdeteksi otomatis dari judul/isi email, tampil besar + tombol Salin Kode; kode yang baru tiba langsung tersalin otomatis (v0.1.2).
           - Tema terang biru-putih, UI Bahasa Indonesia.
+          - Logo amplop baru + tampilan kartu yang dipoles (v0.2.0).
 
           Catatan: APK ditandatangani dengan kunci rilis proyek. Simpan APK ini baik-baik; rilis berikutnya memakai kunci yang sama supaya bisa memperbarui tanpa copot pasang.
           EOF

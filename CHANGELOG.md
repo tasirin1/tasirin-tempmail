@@ -4,6 +4,20 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-11-25
+
+### Added
+
+- Logo aplikasi: ikon adaptif amplop putih di atas gradasi biru
+  (layar utama HP + kepala layar di dalam aplikasi).
+
+### Changed
+
+- Tampilan dipoles: latar biru pucat, alamat dan kotak masuk kini di
+  dalam kartu putih sudut membulat, tombol biru berteks putih, spanduk
+  kode verifikasi jadi blok biru dengan kode putih besar di tengah,
+  kepala layar berisi logo + nama + keterangan layanan.
+
 ## [0.1.2] - 2026-11-25
 
 ### Added

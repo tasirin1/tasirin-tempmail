@@ -5,6 +5,8 @@
     <color name="biru_gelap">#0D47A1</color>
     <color name="biru_muda">#E3F2FD</color>
     <color name="putih">#FFFFFF</color>
+    <color name="latar">#EFF5FC</color>
+    <color name="garis">#D7E5F6</color>
     <color name="teks_utama">#212121</color>
     <color name="teks_redup">#616161</color>
 </resources>
