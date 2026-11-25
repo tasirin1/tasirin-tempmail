@@ -49,17 +49,28 @@ object OtpExtractor {
     // dicatat. Kode verifikasi: 112233"), angkanya milik pemicu lain.
     private fun kodePosUntukAngkaIni(teks: String, m: MatchResult): Boolean {
         val awalan = m.value.dropLast(m.groupValues[1].length)
-        // "code" yang merupakan ekor "ZIP code"/"postal code": kata
-        // pertamanya berada di LUAR jendela cocok (tepat sebelum kata
-        // pemicu), jadi periksa juga teks persis sebelum kecocokan.
-        val sebelum = teks.substring(maxOf(0, m.range.first - 12), m.range.first)
-        if (polaEkorInggris.containsMatchIn(sebelum)) return true
         val cocokId = polaKodePos.findAll(awalan).lastOrNull()
         val cocokEn = polaKodePosInggris.findAll(awalan).lastOrNull()
         val cocokPos = listOfNotNull(cocokId, cocokEn).maxByOrNull { it.range.last }
-            ?: return false
-        val sesudah = awalan.substring(cocokPos.range.last + 1)
-        return polaPemicu.find(sesudah) == null
+        if (cocokPos != null) {
+            val sesudah = awalan.substring(cocokPos.range.last + 1)
+            return polaPemicu.find(sesudah) == null
+        }
+        // "code" yang merupakan ekor "ZIP code"/"postal code": kata
+        // pertamanya berada di LUAR jendela cocok (tepat sebelum kata
+        // pemicu), jadi periksa juga teks persis sebelum kecocokan.
+        // Cabang ini kemarin mengembalikan true langsung — menelan
+        // kode sah bila ada pemicu LAIN di jendela sesudah "code"
+        // milik zip ("Your zip code and verification code is 4455").
+        // Kini: kode pos hanya bila tidak ada pemicu lain sesudah
+        // pemicu pertama (issue #122).
+        val sebelum = teks.substring(maxOf(0, m.range.first - 12), m.range.first)
+        if (polaEkorInggris.containsMatchIn(sebelum)) {
+            val pertama = polaPemicu.find(awalan) ?: return true
+            val sesudahPertama = awalan.substring(pertama.range.last + 1)
+            return polaPemicu.find(sesudahPertama) == null
+        }
+        return false
     }
 
     fun extract(teks: String): String? {

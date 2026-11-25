@@ -123,6 +123,19 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun zipCodeSebelumPemicuLainTidakMenelanKode() {
+        // Issue #122: "code" milik "zip code" berpasangan dengan zip
+        // di luar jendela — angka milik pemicu berikutnya tetap
+        // terdeteksi; zip code yang berdiri sendiri tetap dilewati.
+        assertEquals(
+            "4455",
+            OtpExtractor.extract("Your zip code and verification code is 4455")
+        )
+        assertEquals("4455", OtpExtractor.extract("ZIP code: none. Your code: 4455"))
+        assertNull(OtpExtractor.extract("Your ZIP code is 90210"))
+    }
+
+    @Test
     fun kataBerakhiranZipBukanKodePos() {
         // Issue #117: "unzip" tepat sebelum kata "code" bukan penanda
         // kode pos — kode konteksnya tetap terdeteksi.
