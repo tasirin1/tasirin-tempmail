@@ -18,6 +18,9 @@ object TempMailApi {
     private const val BASE = "https://tempmail.plus"
     // Karakter wilayah privat penahan '&' hasil decode numerik (#102).
     private const val PENANDA_AMP = "\uE000"
+    // Penanda sementara nonkarakter untuk memulihkan U+E000 asli
+    // pengirim (issue #118) — U+FFFE tidak pernah muncul di teks sah.
+    private const val PENANDA_ASLI = "\uFFFE"
 
     private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
 
@@ -127,6 +130,11 @@ object TempMailApi {
         t = t.replace(reBr, "\n")
         t = t.replace(reTutupP, "\n\n")
         t = t.replace(reTag, "")
+        // Karakter penanda yang SUDAH ada di isi email asli diloloskan
+        // dengan penggandaan (pola escape klasik): tanpa ini, U+E000
+        // harfiah dari pengirim ikut dipulihkan menjadi "&" di akhir
+        // (issue #118).
+        t = t.replace(PENANDA_AMP, PENANDA_AMP + PENANDA_AMP)
         // Entitas numerik diterjemahkan per titik kode penuh (emoji utuh),
         // dan nilai yang mustahil dibiarkan apa adanya — tidak melempar,
         // tidak terpotong 16 bit (issue #27).
@@ -141,7 +149,12 @@ object TempMailApi {
             .replace("&quot;", "\"")
             .replace("&nbsp;", " ")
             .replace("&amp;", "&")
+            // Pulihkan penanda: pasangan = karakter asli pengirim
+            // (lewat penanda sementara), tunggal = "&" hasil decode
+            // numerik (issue #118).
+            .replace(PENANDA_AMP + PENANDA_AMP, PENANDA_ASLI)
             .replace(PENANDA_AMP, "&")
+            .replace(PENANDA_ASLI, PENANDA_AMP)
         return t.replace(reSpasi, " ")
             .replace(reBaris3, "\n\n")
             .trim()

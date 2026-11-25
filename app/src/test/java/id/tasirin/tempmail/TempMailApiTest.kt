@@ -66,4 +66,15 @@ class TempMailApiTest {
         assertEquals("A & B", TempMailApi.htmlToText("A &#38; B"))
         assertEquals("&#49;", TempMailApi.htmlToText("&#38;#49;"))
     }
+
+    @Test
+    fun karakterPenandaAsliPengirimTidakBerubah() {
+        // Issue #118: U+E000 harfiah di isi email adalah milik
+        // pengirim — tidak boleh tampil sebagai '&'.
+        assertEquals("teks \uE000 polos", TempMailApi.htmlToText("teks \uE000 polos"))
+        assertEquals(
+            "campur \uE000 dan &",
+            TempMailApi.htmlToText("campur \uE000 dan &#38;")
+        )
+    }
 }
