@@ -46,4 +46,15 @@ class TempMailApiTest {
         )
         assertEquals("<div>", TempMailApi.htmlToText("&lt;div&gt;"))
     }
+
+    @Test
+    fun ampersandNumerikTidakDecodeDuaKali() {
+        // Issue #102: &#38; / &#x26; adalah '&' numerik — rangkaian
+        // "&lt;" yang terbentuk darinya adalah teks, bukan entitas.
+        assertEquals("&lt;", TempMailApi.htmlToText("&#38;lt;"))
+        assertEquals("&lt;", TempMailApi.htmlToText("&#x26;lt;"))
+        // Ampersand numerik yang berdiri sendiri tetap jadi '&'.
+        assertEquals("A & B", TempMailApi.htmlToText("A &#38; B"))
+        assertEquals("&#49;", TempMailApi.htmlToText("&#38;#49;"))
+    }
 }

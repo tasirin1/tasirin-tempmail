@@ -16,6 +16,8 @@ data class MailDetail(val from: String, val subject: String, val date: String, v
 object TempMailApi {
 
     private const val BASE = "https://tempmail.plus"
+    // Karakter wilayah privat penahan '&' hasil decode numerik (#102).
+    private const val PENANDA_AMP = "\uE000"
 
     private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
 
@@ -111,6 +113,12 @@ object TempMailApi {
         return String(Character.toChars(cp))
     }
 
+    // '&' hasil decode entitas numerik (&#38; / &#x26;) ditahan sebagai
+    // karakter penanda wilayah privat selama tahap entitas bernama:
+    // tanpa ini, "&#38;lt;" ter-decode dua kali menjadi "<" padahal
+    // maksud pengirim adalah teks "&lt;" (issue #102).
+    private fun tahanAmpersand(s: String): String = if (s == "&") PENANDA_AMP else s
+
     // Ubah HTML sederhana jadi teks polos: buang blok script/style beserta
     // isinya (issue #13), buang tag, rapikan entitas umum + entitas numerik.
     fun htmlToText(html: String): String {
@@ -121,17 +129,18 @@ object TempMailApi {
         // Entitas numerik diterjemahkan per titik kode penuh (emoji utuh),
         // dan nilai yang mustahil dibiarkan apa adanya — tidak melempar,
         // tidak terpotong 16 bit (issue #27).
-        t = t.replace(reEntitasAngka) { m -> titikKode(m.groupValues[1].toIntOrNull(), m.value) }
-        t = t.replace(reEntitasHex) { m -> titikKode(m.groupValues[1].toIntOrNull(16), m.value) }
+        t = t.replace(reEntitasAngka) { m -> tahanAmpersand(titikKode(m.groupValues[1].toIntOrNull(), m.value)) }
+        t = t.replace(reEntitasHex) { m -> tahanAmpersand(titikKode(m.groupValues[1].toIntOrNull(16), m.value)) }
         // &amp; diterjemahkan TERAKHIR (issue #73): teks yang sengaja
         // dikodekan dua kali seperti &amp;lt; harus tampil sebagai
         // teks "&lt;" sebagaimana ditulis pengirim, bukan "<".
+        // (Baris "&#39;" lama dibuang: sudah ditangani entitas numerik.)
         t = t.replace("&lt;", "<")
             .replace("&gt;", ">")
             .replace("&quot;", "\"")
-            .replace("&#39;", "'")
             .replace("&nbsp;", " ")
             .replace("&amp;", "&")
+            .replace(PENANDA_AMP, "&")
         return t.replace(reSpasi, " ")
             .replace(reBaris3, "\n\n")
             .trim()
