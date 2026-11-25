@@ -4,6 +4,15 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.6.3] - 2026-11-25
+
+### Fixed
+
+- Tepian layar dibuat lebih lega atas masukan uji perangkat
+  v0.6.2 ("tepian terlalu mepet"): jarak tepi luar 16dp → 24dp,
+  jarak tepi dalam kartu alamat 14dp → 18dp, dan jarak kartu dari
+  kepala layar ikut dilonggarkan.
+
 ## [0.6.2] - 2026-11-25
 
 ### Fixed
