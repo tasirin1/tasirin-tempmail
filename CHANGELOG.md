@@ -4,6 +4,31 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-11-25
+
+### Fixed
+
+- Maraton Audit-1: 24 temuan diperbaiki (issue #1–#24).
+- Kode verifikasi tidak hilang permanen bila ambil isi email gagal sesaat
+  (#1); deteksi kode memeriksa semua email, bukan cuma teratas (#2);
+  dialog baca email aman dari crash saat Activity berakhir (#3); angka
+  4 digit acak tidak lagi dianggap kode dan tersalin otomatis (#4); kode
+  lebih dari 8 digit tidak terpotong (#5); tahun sesudah kata pemicu
+  bukan kode (#6).
+- Keadaan polling disinkronkan antar-thread + penanda generasi alamat
+  (#7); baca email memakai executor sendiri (#8); koneksi API selalu
+  dilepas lewat finally (#9); jawaban result=false dilaporkan sebagai
+  gagal, bukan "0 email" (#10); jeda polling mundur saat gagal (#11);
+  workflow rilis: versi manual dari versionName + tag wajib cocok (#12);
+  htmlToText membuang isi script/style + entitas numerik diterjemahkan
+  (#13); body respons dibatasi 2 juta karakter (#14).
+- Dependensi tak terpakai dibuang (#15); rilis memakai minify + shrink
+  (#16); izin ACCESS_NETWORK_STATE dibuang (#17); User-Agent mengikuti
+  versi aplikasi (#18); drawable merujuk @color (#19); daftar inbox hanya
+  dibangun ulang bila berubah (#20); nama lokal dirapatkan + dibatasi
+  64 karakter (#21); asersi tes hampa dibuang (#22); allowBackup dimatikan
+  (#23); panggilan executor dilindungi sesudah shutdown (#24).
+
 ## [0.2.0] - 2026-11-25
 
 ### Added
