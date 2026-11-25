@@ -4,7 +4,11 @@ permissions:
 on:
   push:
     tags: ["v*"]
-  workflow_dispatch:
+  # workflow_dispatch SENGAJA tidak ada (issue #105): dispatch manual
+  # dari main yang sudah maju bisa menimpa APK rilis terbit dengan
+  # build commit lain berlabel versi lama lewat jalur --clobber.
+  # Menjalankan ulang rilis yang sama tetap bisa lewat "Re-run jobs"
+  # pada run tag-nya — ref-nya tetap tag itu.
 
 jobs:
   release:
