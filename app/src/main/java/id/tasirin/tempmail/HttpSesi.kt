@@ -9,9 +9,10 @@ import java.net.URLEncoder
 // Hasil satu permintaan HTTP: kode status + isi body teks.
 data class HasilHttp(val kode: Int, val body: String)
 
-// Klien HTTP sederhana dengan toples kuki sendiri — dibutuhkan layanan
-// berbasis sesi (tempmail.now, tempmail.net, tempail.com) yang mengenali
-// kotak masuk dari kuki, bukan dari alamat email saja.
+// Klien HTTP sederhana dengan toples kuki sendiri. Dipakai semua
+// layanan (issue #52): TempMailApi (tempmail.plus), IsProvider
+// (tempmail.is), dan NowProvider (tempmail.now) — yang berbasis sesi
+// mengenali kotak masuk dari kuki, bukan dari alamat email saja.
 // Semua fungsi blocking — panggil dari thread latar.
 class HttpSesi {
 
