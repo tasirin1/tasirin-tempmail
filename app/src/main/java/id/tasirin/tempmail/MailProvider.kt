@@ -74,14 +74,16 @@ class PlusProvider : MailProvider {
 }
 
 // Daftar semua layanan, urut tampil di pemilih.
+// tempmail.net + tempail.com DICABUT di v0.7.2 atas keputusan owner:
+// gerbang bot Cloudflare keduanya menolak aplikasi dari perangkat
+// (HTTP 403) walau header sudah disamarkan seperti peramban, dan
+// email uji ke tempmail.net tidak pernah tiba.
 object Layanan {
 
     val semua: List<MailProvider> = listOf(
         PlusProvider(),
         IsProvider(),
-        NowProvider(),
-        NetProvider("net", "tempmail.net", "https://tempmail.net"),
-        NetProvider("ail", "tempail.com", "https://tempail.com")
+        NowProvider()
     )
 
     fun cari(id: String): MailProvider = semua.firstOrNull { it.id == id } ?: semua[0]

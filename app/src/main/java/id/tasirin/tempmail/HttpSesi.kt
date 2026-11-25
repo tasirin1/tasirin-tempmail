@@ -41,9 +41,9 @@ class HttpSesi {
             conn.readTimeout = 15000
             conn.instanceFollowRedirects = true
             // Header dibuat menyerupai peramban Android beneran: gerbang
-            // bot Cloudflare di tempail.com menolak (HTTP 403) permintaan
-            // yang tampak seperti klien non-peramban — terbukti di
-            // perangkat 2026-11-25 dengan UA aplikasi polos.
+            // bot di beberapa layanan menolak (HTTP 403) permintaan yang
+            // tampak seperti klien non-peramban — terbukti di perangkat
+            // 2026-11-25 dengan UA aplikasi polos.
             conn.setRequestProperty("User-Agent", UA_PERAMBAN)
             conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8")
             conn.setRequestProperty("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7")
