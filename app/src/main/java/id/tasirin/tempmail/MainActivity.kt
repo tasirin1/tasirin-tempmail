@@ -67,8 +67,11 @@ class MainActivity : AppCompatActivity() {
     @Volatile
     private var generasiAlamat = 0
 
+    // Salin otomatis hanya boleh untuk kode yang tiba SESUDAH sapuan awal
+    // inbox lama tuntas seluruhnya — bukan sekadar daftar pernah dimuat,
+    // karena sapuan awal bisa menyebar ke beberapa putaran (issue #33).
     @Volatile
-    private var inboxPernahDimuat = false
+    private var sapuAwalSelesai = false
 
     private val dataInbox = ArrayList<HashMap<String, String>>()
     private var itemInbox: List<MailItem> = emptyList()
@@ -197,7 +200,7 @@ class MainActivity : AppCompatActivity() {
             .edit().putString("email", alamat).apply()
         synchronized(idSudahDicek) { idSudahDicek.clear() }
         synchronized(gagalAmbilIsi) { gagalAmbilIsi.clear() }
-        inboxPernahDimuat = false
+        sapuAwalSelesai = false
         itemInbox = emptyList()
         dataInbox.clear()
         adapterInbox.notifyDataSetChanged()
@@ -222,7 +225,7 @@ class MainActivity : AppCompatActivity() {
     private fun jalankanRefresh(email: String, gen: Int) {
             try {
                 val items = TempMailApi.fetchInbox(email)
-                val pernahDimuat = inboxPernahDimuat
+                val bolehSalin = sapuAwalSelesai
                 // Fase 1: tampilkan daftar SEGERA — jangan menunggu pemindaian
                 // isi email yang bisa lama (issue #25).
                 runOnUiThread {
@@ -244,13 +247,13 @@ class MainActivity : AppCompatActivity() {
                     }
                     val jam = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
                     tvStatus.text = "Dicek terakhir $jam — ${items.size} email"
-                    inboxPernahDimuat = true
                 }
                 // Fase 2: pindai kode dari email yang belum tuntas dicek
                 // (issue #2), paling banyak 5 pengambilan isi per putaran —
                 // sisanya putaran berikutnya (issue #25).
                 var kodeBaru: String? = null
                 var ambilIsi = 0
+                var sisaBelum = false
                 for (m in items) {
                     if (gen != generasiAlamat) break
                     // Email tanpa id memakai kunci gabungan isi — kunci kosong
@@ -260,7 +263,10 @@ class MainActivity : AppCompatActivity() {
                     var kode = OtpExtractor.extract(m.subject)
                     var tuntas = kode != null
                     if (kode == null) {
-                        if (ambilIsi >= 5) continue
+                        if (ambilIsi >= 5) {
+                            sisaBelum = true
+                            continue
+                        }
                         ambilIsi++
                         // Gagal ambil isi email tidak boleh menggagalkan daftar inbox,
                         // tapi emailnya juga BELUM tuntas dicek: jangan ditandai,
@@ -294,14 +300,17 @@ class MainActivity : AppCompatActivity() {
                         }
                         if (kode != null && kodeBaru == null) kodeBaru = kode
                     }
+                    if (!tuntas) sisaBelum = true
                 }
+                // Sapuan awal dinyatakan selesai hanya bila tak ada sisa.
+                if (!sisaBelum && gen == generasiAlamat) sapuAwalSelesai = true
                 val kodeFinal = kodeBaru
                 runOnUiThread {
                     sedangCek.set(false)
                     if (email != alamatSekarang) return@runOnUiThread
                     if (kodeFinal != null) {
                         tampilkanKode(kodeFinal)
-                        if (pernahDimuat) {
+                        if (bolehSalin) {
                             // Kode BARU tiba: langsung salin supaya tinggal tempel.
                             // (Hanya saat aplikasi terbuka — Android memblokir
                             // tulisan clipboard dari aplikasi latar.)
