@@ -62,6 +62,14 @@ jobs:
           if [ ! -s /tmp/release-notes.md ]; then
             echo "Rilis Tasirin TempMail v${VER} — lihat CHANGELOG.md di repo untuk rincian perubahan." > /tmp/release-notes.md
           fi
-          gh release create "v${VER}" "tasirin-tempmail-v${VER}.apk" \
-            --title "Tasirin TempMail v${VER}" \
-            --notes-file /tmp/release-notes.md
+          # Idempoten (issue #76): jalan ulang pada tag yang rilisnya
+          # sudah ada menimpa asetnya, bukan gagal di langkah terakhir
+          # sesudah build penuh.
+          if gh release view "v${VER}" > /dev/null 2>&1; then
+            gh release upload "v${VER}" "tasirin-tempmail-v${VER}.apk" --clobber
+            gh release edit "v${VER}" --notes-file /tmp/release-notes.md
+          else
+            gh release create "v${VER}" "tasirin-tempmail-v${VER}.apk" \
+              --title "Tasirin TempMail v${VER}" \
+              --notes-file /tmp/release-notes.md
+          fi
