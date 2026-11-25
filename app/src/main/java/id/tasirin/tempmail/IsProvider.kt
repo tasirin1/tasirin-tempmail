@@ -277,7 +277,6 @@ class IsProvider : MailProvider {
         val dikenalBatch = HashSet(idDikenal)
         for (i in 0 until (arr?.length() ?: 0)) {
             val m = arr!!.getJSONObject(i)
-            val idPesan = m.optLong("id").toString()
             // Kolom from berbentuk string JSON: {"name":..., "address":...}
             var dari = m.optString("from")
             try {
@@ -290,7 +289,16 @@ class IsProvider : MailProvider {
             }
             val subjek = m.optString("subject")
             val waktu = waktuLokal(m.optString("created_at"))
+            // Pesan tanpa id TIDAK boleh runtuh ke id "0" bersama
+            // (dedupe + cache isi bertabrakan) — pakai kunci pengganti
+            // dari sidik isi, pola #42 di NowProvider (issue #111).
+            // Kursor delta hanya maju untuk id numerik sungguhan.
             val idNum = m.optLong("id")
+            val idPesan = if (m.isNull("id")) {
+                "tanpa-id-" + (dari + "|" + subjek + "|" + m.optString("body")).hashCode()
+            } else {
+                idNum.toString()
+            }
             if (idNum > kursorBaru) kursorBaru = idNum
             if (dikenalBatch.add(idPesan)) {
                 baru.add(MailItem(id = idPesan, from = dari, subject = subjek, time = waktu))
