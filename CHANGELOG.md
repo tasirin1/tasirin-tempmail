@@ -4,6 +4,38 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.9] - 2026-11-25
+
+Hasil Maraton-15 (Audit-15: 5 temuan, issue #148–#152 — semuanya
+Rendah: sidik ganda plus yang ternyata tidak merdeka, dan tepi
+kalibrasi aturan batas kalimat struktural; Area B bersih tiga
+ronde berturut-turut).
+
+### Fixed
+
+- tempmail.plus: komponen kedua sidik id sintetis diganti
+  FNV-1a. Dua hashCode polinomial basis-31 atas susunan kolom
+  berbeda ternyata tidak merdeka — tabrakan satu kolom
+  berpanjang sama (subjek "Aa" vs "BB") menembus keduanya
+  sekaligus; FNV-1a berstruktur beda sehingga kelas tabrakan
+  itu tidak lolos (issue #148).
+- Penjaga OTP: ambang kata penutup batas kalimat turun ke
+  3 huruf — kalimat berakhir "ini"/"itu" yang sangat umum
+  tidak lagi menelan OTP kalimat berikut (issue #149);
+  singkatan alamat/administrasi prov, kec, kel, kab, yth, alm
+  masuk daftar bukan-batas (issue #151); kalimat baru berhuruf
+  kecil sesudah kata penutup panjang (>=5 huruf) ikut dianggap
+  batas kalimat (issue #150); kata penghubung tunggal sesudah
+  baris baru (adalah/is/ialah) adalah kelanjutan label, bukan
+  kalimat baru (issue #152).
+
+### Tests
+
+- Tes baru: kata penutup 3 huruf umum adalah batas; singkatan
+  prov/kec bukan batas; kalimat berhuruf kecil sesudah kata
+  panjang adalah batas; penghubung tunggal sesudah baris baru
+  tidak memutus ikatan label.
+
 ## [0.8.8] - 2026-11-25
 
 Hasil Maraton-14 (Audit-14: 5 temuan, issue #143–#147 — semuanya
