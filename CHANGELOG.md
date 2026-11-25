@@ -4,6 +4,22 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-11-25
+
+### Fixed
+
+- Maraton Audit-2: 8 temuan diperbaiki (issue #25–#32).
+- Daftar inbox kini tampil segera; pemindaian kode menyusul di belakang
+  dan dibatasi 5 pengambilan isi per putaran (#25). Ambil isi yang gagal
+  menyerah sesudah 3x percobaan, tidak dicoba ulang selamanya (#26).
+- htmlToText: entitas numerik diterjemahkan per titik kode penuh (emoji
+  utuh) dan nilai mustahil tidak lagi membuat email gagal dibuka (#27).
+- Baca email satu pada satu waktu — ketukan beruntun tidak menumpuk
+  dialog (#28). fetchDetail memeriksa field result seperti fetchInbox
+  (#29). Email tanpa mail_id memakai kunci gabungan (#30). Rantai
+  polling tidak bisa ganda dari onResume (#31). Catatan rilis kini
+  diambil dari CHANGELOG versi bersangkutan (#32).
+
 ## [0.3.0] - 2026-11-25
 
 ### Fixed
