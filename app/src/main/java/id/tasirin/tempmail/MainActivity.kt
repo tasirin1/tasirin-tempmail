@@ -254,21 +254,24 @@ class MainActivity : AppCompatActivity() {
                 var kodeBaru: String? = null
                 var ambilIsi = 0
                 var sisaBelum = false
-                val hitungTanpaId = HashMap<String, Int>()
-                for (m in items) {
-                    if (gen != generasiAlamat) break
-                    // Email tanpa id memakai kunci gabungan isi + nomor urut
-                    // kemunculan — kunci kosong bersama membuat email lain tak
-                    // pernah dicek (issue #30), dan email identik tanpa nomor
-                    // urut pun masih bertabrakan (issue #34).
-                    val kunci = if (m.id.isNotBlank()) {
-                        m.id
-                    } else {
+                // Kunci email tanpa id (gabungan isi, issue #30/#34) diberi
+                // nomor urut yang dihitung dari EKOR daftar: email baru
+                // menumpuk di kepala, jadi kunci email lama tidak bergeser
+                // dan tidak diperiksa ulang (issue #35).
+                val kunciPerIndeks = HashMap<Int, String>()
+                val hitungEkor = HashMap<String, Int>()
+                for (i in items.indices.reversed()) {
+                    val m = items[i]
+                    if (m.id.isBlank()) {
                         val dasar = "tanpa-id:" + m.subject + "|" + m.from + "|" + m.time
-                        val urut = hitungTanpaId[dasar] ?: 0
-                        hitungTanpaId[dasar] = urut + 1
-                        "$dasar#$urut"
+                        val urut = hitungEkor[dasar] ?: 0
+                        hitungEkor[dasar] = urut + 1
+                        kunciPerIndeks[i] = "$dasar#$urut"
                     }
+                }
+                for ((indeks, m) in items.withIndex()) {
+                    if (gen != generasiAlamat) break
+                    val kunci = if (m.id.isNotBlank()) m.id else kunciPerIndeks[indeks]!!
                     if (kunci in idSudahDicek) continue
                     var kode = OtpExtractor.extract(m.subject)
                     var tuntas = kode != null
