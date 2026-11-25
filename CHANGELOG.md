@@ -4,6 +4,16 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.10.1] - 2026-11-25
+
+### Changed
+
+- Tombol **Salin Email** dan **Ganti Email** dipindah ke paling
+  atas kartu alamat, di atas pemilih layanan (permintaan owner
+  dari uji perangkat v0.10.0). Urutan kartu kini: tombol salin/
+  ganti, layanan, alamat, lalu nama sendiri. Id tombol tidak
+  berubah, jadi kabel klik di MainActivity tidak berubah.
+
 ## [0.10.0] - 2026-11-25
 
 ### Added
