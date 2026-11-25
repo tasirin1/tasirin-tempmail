@@ -158,14 +158,27 @@ class NowProvider : MailProvider {
                 ?.groupValues?.get(1)?.toIntOrNull()
             if (kode == 401 || kode == 403 || kode == 404) {
                 resetSesi()
-                val hasilBaru = ambilInboxSekali(alamat, dariPemulihan = true)
-                // Alamat sesi baru WAJIB dilaporkan: tanpa ini UI tetap
-                // menampilkan alamat lama yang mati dan polling
-                // berikutnya kena penjaga alamat basi selamanya (#80).
-                if (alamatAktif.isNotBlank() && alamatAktif != alamat) {
-                    alamatDariServer = alamatAktif
+                try {
+                    val hasilBaru = ambilInboxSekali(alamat, dariPemulihan = true)
+                    // Alamat sesi baru WAJIB dilaporkan: tanpa ini UI tetap
+                    // menampilkan alamat lama yang mati dan polling
+                    // berikutnya kena penjaga alamat basi selamanya (#80).
+                    if (alamatAktif.isNotBlank() && alamatAktif != alamat) {
+                        alamatDariServer = alamatAktif
+                    }
+                    hasilBaru
+                } catch (e2: Exception) {
+                    // Pemulihan ikut GAGAL (issue #106): sesi baru mungkin
+                    // sudah terbentuk di tengah jalan (alamatAktif sudah
+                    // alamat baru) — laporkan penyimpangannya sebelum
+                    // melempar, supaya UI menyelaraskan alamat pada
+                    // polling sukses berikutnya. Tanpa ini, penjaga
+                    // alamat basi menjawab kosong-sukses selamanya.
+                    if (alamatAktif.isNotBlank() && alamatAktif != alamat) {
+                        alamatDariServer = alamatAktif
+                    }
+                    throw e2
                 }
-                hasilBaru
             } else {
                 throw e
             }

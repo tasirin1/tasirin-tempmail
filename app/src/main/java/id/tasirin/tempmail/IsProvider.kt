@@ -194,11 +194,21 @@ class IsProvider : MailProvider {
             } catch (e: IllegalStateException) {
                 if (e.message?.contains("HTTP ") == true) {
                     resetKlien()
-                    val hasilBaru = ambilInboxSekali(alamat, dariPemulihan = true)
-                    if (alamatAktif.isNotBlank() && alamatAktif != alamat) {
-                        alamatDariServer = alamatAktif
+                    try {
+                        val hasilBaru = ambilInboxSekali(alamat, dariPemulihan = true)
+                        if (alamatAktif.isNotBlank() && alamatAktif != alamat) {
+                            alamatDariServer = alamatAktif
+                        }
+                        hasilBaru
+                    } catch (e2: Exception) {
+                        // Pemulihan ikut gagal (issue #106): klien baru
+                        // mungkin sudah terbentuk — laporkan alamatnya
+                        // sebelum melempar, sama seperti NowProvider.
+                        if (alamatAktif.isNotBlank() && alamatAktif != alamat) {
+                            alamatDariServer = alamatAktif
+                        }
+                        throw e2
                     }
-                    hasilBaru
                 } else {
                     throw e
                 }
