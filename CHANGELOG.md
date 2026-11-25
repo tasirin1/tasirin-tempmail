@@ -4,6 +4,15 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.10.2] - 2026-11-25
+
+### Changed
+
+- Kolom alamat email dipindah tepat ke bawah tombol Salin/Ganti
+  Email; pemilih layanan kini sesudah kolom alamat (permintaan
+  owner dari uji perangkat v0.10.1). Urutan kartu kini: tombol
+  salin/ganti, alamat, layanan, lalu nama sendiri.
+
 ## [0.10.1] - 2026-11-25
 
 ### Changed
