@@ -195,7 +195,15 @@ class IsProvider : MailProvider {
             )
         )
         val arr = json.optJSONArray("messages")
+        // Uraikan SELURUH batch ke penampung lokal dulu; keadaan bersama
+        // (kursor delta, daftar, cache isi) hanya diubah sesudah seluruh
+        // batch berhasil diuraikan. Pola lama memajukan kursor di tengah
+        // loop: satu elemen rusak membuat pesan-pesan sebelumnya sudah
+        // melewati kursor tapi tidak pernah masuk daftar — hilang
+        // permanen (issue #83).
         val baru = ArrayList<MailItem>()
+        val isiBaru = ArrayList<Pair<String, MailDetail>>()
+        var kursorBaru = idTerbesar
         for (i in 0 until (arr?.length() ?: 0)) {
             val m = arr!!.getJSONObject(i)
             val idPesan = m.optLong("id").toString()
@@ -212,13 +220,12 @@ class IsProvider : MailProvider {
             val subjek = m.optString("subject")
             val waktu = waktuLokal(m.optString("created_at"))
             val idNum = m.optLong("id")
-            if (idNum > idTerbesar) idTerbesar = idNum
-            if (daftarPesan.none { it.id == idPesan }) {
+            if (idNum > kursorBaru) kursorBaru = idNum
+            if (daftarPesan.none { it.id == idPesan } && baru.none { it.id == idPesan }) {
                 baru.add(MailItem(id = idPesan, from = dari, subject = subjek, time = waktu))
             }
-            isiTerakhir.taruh(
-                idPesan,
-                MailDetail(
+            isiBaru.add(
+                idPesan to MailDetail(
                     from = dari,
                     subject = subjek,
                     date = waktu,
@@ -226,6 +233,9 @@ class IsProvider : MailProvider {
                 )
             )
         }
+        // Batch utuh teruraikan — terapkan keadaan bersama sekarang.
+        idTerbesar = kursorBaru
+        for ((idPesan, detail) in isiBaru) isiTerakhir.taruh(idPesan, detail)
         // Pesan baru dari server selalu lebih baru dari yang sudah ada.
         daftarPesan.addAll(0, baru)
         return ArrayList(daftarPesan)
