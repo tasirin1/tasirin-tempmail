@@ -4,6 +4,39 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.7] - 2026-11-25
+
+Hasil Maraton-13 (Audit-13: 4 temuan, issue #139–#142 — semuanya
+Rendah: penyelesaian akar keluarga id sintetis, dan kalibrasi
+pemutus batas kalimat di kedua penjaga OTP; Area B bersih).
+
+### Fixed
+
+- tempmail.plus: id sintetis email tanpa `mail_id` kini sidik
+  isi saja — pembeda peringkat kembar dibuang. Dua email
+  bertripel identik memang tidak bisa dibedakan secara stabil
+  (tiga percobaan posisi/peringkat selalu bergeser pada mutasi
+  daftar tertentu), dan tidak perlu: kode untuk item tanpa-id
+  hanya berasal dari subjek yang menjadi bagian sidik itu
+  sendiri. Id kini stabil terhadap semua mutasi daftar
+  (issue #139).
+- Penjaga OTP: deteksi batas kalimat kini sadar singkatan —
+  titik pada "Jl."/"hal."/"No." dan inisial bukan lagi batas
+  kalimat, jadi ikatan label kode pos tidak putus oleh singkatan
+  (issue #140); baris baru tepat sesudah label ("Postal code:"
+  lalu nilainya di baris berikut) bukan pemutus ikatan, hanya
+  baris baru yang didahului kata nyata yang memutus
+  (issue #141); penjaga jalur konteks kini ikut memutus ikatan
+  pada batas kalimat, selaras jalur cadangan — OTP 4 digit
+  tanpa pemicu sesudah kalimat kode pos tidak lagi tertelan
+  (issue #142).
+
+### Tests
+
+- Tes baru: titik singkatan bukan batas kalimat; baris baru
+  sesudah label bukan pemutus; frasa pos kalimat sebelumnya
+  tidak menelan OTP konteks.
+
 ## [0.8.6] - 2026-11-25
 
 Hasil Maraton-12 (Audit-12: 4 temuan, issue #135–#138 — semuanya
