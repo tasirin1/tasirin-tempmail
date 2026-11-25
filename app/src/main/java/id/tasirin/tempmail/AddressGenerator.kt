@@ -19,6 +19,10 @@ object AddressGenerator {
 
     private const val CAMPURAN = "abcdefghijklmnopqrstuvwxyz0123456789"
 
+    // Pola titik ganda — dikompilasi sekali, bukan tiap panggilan
+    // sanitizeLocalPart (issue #79).
+    private val reTitikGanda = Regex("\\.+")
+
     // Nama lokal acak: diawali huruf, sisanya huruf kecil/angka.
     fun randomLocalPart(panjang: Int = 12, random: Random = Random.Default): String {
         require(panjang >= 4) { "panjang minimal 4" }
@@ -35,7 +39,7 @@ object AddressGenerator {
     fun sanitizeLocalPart(mentah: String): String {
         return mentah.lowercase()
             .filter { it in 'a'..'z' || it in '0'..'9' || it == '.' || it == '_' || it == '-' }
-            .replace(Regex("\\.+"), ".")
+            .replace(reTitikGanda, ".")
             .trim('.', '-', '_')
             .take(64)
             .trim('.', '-', '_')
