@@ -103,18 +103,27 @@ object OtpExtractor {
         return null
     }
 
-    // Label kode pos tepat sebelum angka ini? (jendela pandang-balik
-    // pendek; label yang jauh dari angkanya urusan jalur konteks).
-    // \b di depan wajib (issue #133, pola yang sama dengan perbaikan
-    // #117): tanpa itu "zip" di dalam unzip/gzip ikut dianggap label.
-    // Alternatif telanjang zip/postal wajib diakhiri titik dua
-    // ("ZIP: 123456") — kata "zip" biasa ("file zip 123456") bukan
-    // label dan tidak boleh menelan kode yang sah.
-    private val polaLabelKodePos =
-        Regex("""(?i)\b(?:kode[\s-]*pos(?:nya|ku|mu|kau|anda)?|(?:zip|postal)[\s-]*code|(?:zip|postal)[\s]*:)[\s:]*$""")
+    // Label telanjang Inggris wajib titik dua ("ZIP: 123456",
+    // "Postal: 123456") — kata "zip" biasa ("file zip 123456")
+    // bukan label (issue #133).
+    private val polaLabelTelanjang = Regex("""(?i)\b(?:zip|postal)[\s]*:""")
 
+    // Angka ini milik frasa kode pos? Cari frasa kode pos terakhir
+    // di jendela pandang-balik (40 karakter — label boleh berjarak,
+    // mis. "kode pos anda adalah 123456", issue #132), lalu angka
+    // ini milik frasa itu HANYA bila di antaranya tidak ada angka
+    // lain (angka lain = labelnya milik angka itu) dan tidak ada
+    // kata pemicu lain (pemicu lain = angkanya milik pemicu itu).
+    // Logika yang sama dengan penjaga jalur konteks.
     private fun berlabelKodePos(teks: String, awalAngka: Int): Boolean {
-        val sebelum = teks.substring(maxOf(0, awalAngka - 20), awalAngka)
-        return polaLabelKodePos.containsMatchIn(sebelum)
+        val sebelum = teks.substring(maxOf(0, awalAngka - 40), awalAngka)
+        val cocok = listOfNotNull(
+            polaKodePos.findAll(sebelum).lastOrNull(),
+            polaKodePosInggris.findAll(sebelum).lastOrNull(),
+            polaLabelTelanjang.findAll(sebelum).lastOrNull()
+        ).maxByOrNull { it.range.last } ?: return false
+        val antara = sebelum.substring(cocok.range.last + 1)
+        return !antara.any { it.isDigit() } &&
+            polaPemicu.find(antara) == null
     }
 }

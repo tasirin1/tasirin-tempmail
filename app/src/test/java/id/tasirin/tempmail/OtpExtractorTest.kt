@@ -157,6 +157,19 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kodePosBerjarakDilewatiDiJalurCadangan() {
+        // Issue #132: label berjarak kata penghubung ikut dikenali
+        // di jalur cadangan, selaras jalur konteks.
+        assertNull(OtpExtractor.extract("kode pos anda adalah 123456"))
+        assertNull(OtpExtractor.extract("kode pos anda adalah 123 456"))
+        // Label milik angka LAIN tidak menelan kode berikutnya.
+        assertEquals(
+            "654321",
+            OtpExtractor.extract("Kode pos: 40286. Gunakan 654321")
+        )
+    }
+
+    @Test
     fun kataZipBukanLabelTidakMenelanKode() {
         // Issue #133: "zip" di dalam kata lain atau sebagai kata
         // biasa bukan label kode pos — kode sah tetap ketemu.
