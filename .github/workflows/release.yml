@@ -1,0 +1,63 @@
+name: Release
+permissions:
+  contents: write
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: "Rilis APK bertanda tangan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "gradle"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+
+      - name: Decode keystore dari secret
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > /tmp/keystore.p12
+
+      - name: Build release + unit test
+        run: >
+          ./gradlew assembleRelease testDebugUnitTest
+          -PstoreFile=/tmp/keystore.p12
+          -PstorePassword=${{ secrets.STORE_PASSWORD }}
+          -PkeyAlias=tasirin-tempmail
+          -PkeyPassword=${{ secrets.STORE_PASSWORD }}
+
+      - name: Terbitkan GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VER="${GITHUB_REF_NAME#v}"
+          else
+            VER="0.1.0"
+          fi
+          cp app/build/outputs/apk/release/app-release.apk "tasirin-tempmail-v${VER}.apk"
+          cat > /tmp/release-notes.md << 'EOF'
+          Rilis Tasirin TempMail — aplikasi Android email sekali pakai berbasis tempmail.plus, open source, kode orisinal.
+
+          Isi v0.1.0:
+          - Alamat acak + Salin Email + Ganti Email (rotasi), 7 pilihan domain tempmail.plus, nama sendiri bisa diketik.
+          - Kotak masuk dicek otomatis tiap 8 detik selama aplikasi terbuka; ketuk email untuk membaca isinya.
+          - Kode verifikasi (OTP) terdeteksi otomatis dari judul/isi email, tampil besar + tombol Salin Kode.
+          - Tema terang biru-putih, UI Bahasa Indonesia.
+
+          Catatan: APK ditandatangani dengan kunci rilis proyek. Simpan APK ini baik-baik; rilis berikutnya memakai kunci yang sama supaya bisa memperbarui tanpa copot pasang.
+          EOF
+          gh release create "v${VER}" "tasirin-tempmail-v${VER}.apk" \
+            --title "Tasirin TempMail v${VER}" \
+            --notes-file /tmp/release-notes.md

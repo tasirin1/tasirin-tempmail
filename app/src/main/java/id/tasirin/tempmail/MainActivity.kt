@@ -1,0 +1,281 @@
+package id.tasirin.tempmail
+
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.ListView
+import android.widget.SimpleAdapter
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+
+// Layar utama: alamat email sekali pakai (tempmail.plus) + kotak masuk
+// yang dicek otomatis + deteksi kode verifikasi siap salin.
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var tvEmail: TextView
+    private lateinit var spinnerDomain: Spinner
+    private lateinit var etNama: EditText
+    private lateinit var llKode: LinearLayout
+    private lateinit var tvKode: TextView
+    private lateinit var tvStatus: TextView
+    private lateinit var lvInbox: ListView
+    private lateinit var tvKosong: TextView
+
+    private val handler = Handler(Looper.getMainLooper())
+    private val executor = Executors.newSingleThreadExecutor()
+    private val sedangCek = AtomicBoolean(false)
+
+    private var alamatSekarang: String = ""
+    private var spinnerSiap = false
+    private var polling = false
+
+    // Id email terbaru yang isinya sudah diperiksa untuk kode verifikasi.
+    private var idTerakhirDicek: String? = null
+    private var inboxPernahDimuat = false
+
+    private val dataInbox = ArrayList<HashMap<String, String>>()
+    private var itemInbox: List<MailItem> = emptyList()
+    private lateinit var adapterInbox: SimpleAdapter
+
+    private val pollRunnable = object : Runnable {
+        override fun run() {
+            refreshInbox()
+            if (polling) handler.postDelayed(this, 8000)
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        tvEmail = findViewById(R.id.tvEmail)
+        spinnerDomain = findViewById(R.id.spinnerDomain)
+        etNama = findViewById(R.id.etNama)
+        llKode = findViewById(R.id.llKode)
+        tvKode = findViewById(R.id.tvKode)
+        tvStatus = findViewById(R.id.tvStatus)
+        lvInbox = findViewById(R.id.lvInbox)
+        tvKosong = findViewById(R.id.tvKosong)
+
+        adapterInbox = SimpleAdapter(
+            this,
+            dataInbox,
+            android.R.layout.simple_list_item_2,
+            arrayOf("judul", "dari"),
+            intArrayOf(android.R.id.text1, android.R.id.text2)
+        )
+        lvInbox.adapter = adapterInbox
+        lvInbox.setOnItemClickListener { _, _, posisi, _ ->
+            val item = itemInbox.getOrNull(posisi) ?: return@setOnItemClickListener
+            bukaDetail(item)
+        }
+
+        val adapterDomain = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            AddressGenerator.DOMAINS
+        )
+        adapterDomain.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerDomain.adapter = adapterDomain
+        spinnerDomain.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, posisi: Int, id: Long) {
+                if (!spinnerSiap || alamatSekarang.isBlank()) return
+                val domain = AddressGenerator.DOMAINS[posisi]
+                if (alamatSekarang.substringAfter("@", "") != domain) {
+                    setEmail(alamatSekarang.substringBefore("@") + "@" + domain)
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        findViewById<Button>(R.id.btnSalin).setOnClickListener {
+            salin(alamatSekarang, "Email tersalin")
+        }
+        findViewById<Button>(R.id.btnGanti).setOnClickListener {
+            val domain = AddressGenerator.DOMAINS[spinnerDomain.selectedItemPosition]
+            setEmail(AddressGenerator.randomLocalPart() + "@" + domain)
+            toast("Email diganti")
+        }
+        findViewById<Button>(R.id.btnPakai).setOnClickListener {
+            val bersih = AddressGenerator.sanitizeLocalPart(etNama.text.toString())
+            if (bersih.isEmpty()) {
+                toast("Nama tidak sah")
+            } else {
+                val domain = AddressGenerator.DOMAINS[spinnerDomain.selectedItemPosition]
+                etNama.text.clear()
+                setEmail("$bersih@$domain")
+            }
+        }
+        findViewById<Button>(R.id.btnSalinKode).setOnClickListener {
+            salin(tvKode.text.toString(), "Kode tersalin")
+        }
+        findViewById<Button>(R.id.btnSegarkan).setOnClickListener { refreshInbox() }
+
+        // Alamat tersimpan dari pemakaian sebelumnya, atau buat baru.
+        val prefs = getSharedPreferences("tempmail", Context.MODE_PRIVATE)
+        val tersimpan = prefs.getString("email", null)
+        val awal = if (!tersimpan.isNullOrBlank()) tersimpan else AddressGenerator.randomAddress()
+        val idxDomain = AddressGenerator.DOMAINS.indexOf(awal.substringAfter("@", ""))
+        if (idxDomain >= 0) spinnerDomain.setSelection(idxDomain)
+        spinnerSiap = true
+        setEmail(awal)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        polling = true
+        handler.post(pollRunnable)
+    }
+
+    override fun onPause() {
+        polling = false
+        handler.removeCallbacks(pollRunnable)
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        executor.shutdownNow()
+        super.onDestroy()
+    }
+
+    // Ganti alamat aktif: simpan, kosongkan tampilan, langsung cek inbox.
+    private fun setEmail(alamat: String) {
+        alamatSekarang = alamat
+        tvEmail.text = alamat
+        getSharedPreferences("tempmail", Context.MODE_PRIVATE)
+            .edit().putString("email", alamat).apply()
+        idTerakhirDicek = null
+        inboxPernahDimuat = false
+        itemInbox = emptyList()
+        dataInbox.clear()
+        adapterInbox.notifyDataSetChanged()
+        tvKosong.visibility = View.VISIBLE
+        sembunyikanKode()
+        refreshInbox()
+    }
+
+    // Ambil daftar inbox dari API di thread latar, lalu perbarui tampilan.
+    private fun refreshInbox() {
+        if (!sedangCek.compareAndSet(false, true)) return
+        val email = alamatSekarang
+        executor.execute {
+            try {
+                val items = TempMailApi.fetchInbox(email)
+                var kodeBaru: String? = null
+                val terbaru = items.firstOrNull()
+                if (terbaru != null && terbaru.id != idTerakhirDicek) {
+                    kodeBaru = OtpExtractor.extract(terbaru.subject)
+                    if (kodeBaru == null) {
+                        // Gagal ambil isi email tidak boleh menggagalkan daftar inbox.
+                        try {
+                            val detail = TempMailApi.fetchDetail(email, terbaru.id)
+                            kodeBaru = OtpExtractor.extract(terbaru.subject + "\n" + detail.text)
+                        } catch (e: Exception) {
+                            kodeBaru = null
+                        }
+                    }
+                    idTerakhirDicek = terbaru.id
+                }
+                val kodeFinal = kodeBaru
+                val pernahDimuat = inboxPernahDimuat
+                runOnUiThread {
+                    sedangCek.set(false)
+                    if (email != alamatSekarang) return@runOnUiThread
+                    itemInbox = items
+                    dataInbox.clear()
+                    for (m in items) {
+                        val baris = HashMap<String, String>()
+                        baris["judul"] = m.subject.ifBlank { "(tanpa judul)" }
+                        baris["dari"] = listOf(m.from, m.time).filter { it.isNotBlank() }.joinToString(" · ")
+                        dataInbox.add(baris)
+                    }
+                    adapterInbox.notifyDataSetChanged()
+                    tvKosong.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+                    val jam = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
+                    tvStatus.text = "Dicek terakhir $jam — ${items.size} email"
+                    inboxPernahDimuat = true
+                    if (kodeFinal != null) {
+                        tampilkanKode(kodeFinal)
+                        if (pernahDimuat) toast("Kode verifikasi tiba: $kodeFinal")
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    sedangCek.set(false)
+                    if (email != alamatSekarang) return@runOnUiThread
+                    tvStatus.text = "Gagal cek inbox: ${e.message ?: "jaringan bermasalah"}"
+                }
+            }
+        }
+    }
+
+    // Ambil isi lengkap satu email lalu tampilkan sebagai dialog.
+    private fun bukaDetail(item: MailItem) {
+        val email = alamatSekarang
+        toast("Membuka email…")
+        executor.execute {
+            try {
+                val detail = TempMailApi.fetchDetail(email, item.id)
+                val kode = OtpExtractor.extract(detail.subject + "\n" + detail.text)
+                runOnUiThread {
+                    val isi = StringBuilder()
+                    isi.append("Dari: ").append(detail.from.ifBlank { item.from }).append("\n")
+                    isi.append("Waktu: ").append(detail.date.ifBlank { item.time }).append("\n\n")
+                    isi.append(detail.text.ifBlank { "(isi kosong)" })
+                    val teks = if (isi.length > 6000) isi.substring(0, 6000) + "\n…(dipotong)" else isi.toString()
+                    val builder = AlertDialog.Builder(this)
+                        .setTitle(detail.subject.ifBlank { item.subject.ifBlank { "(tanpa judul)" } })
+                        .setMessage(teks)
+                        .setNegativeButton("Tutup", null)
+                    if (kode != null) {
+                        builder.setPositiveButton("Salin Kode $kode") { _, _ ->
+                            salin(kode, "Kode tersalin")
+                            tampilkanKode(kode)
+                        }
+                    }
+                    builder.show()
+                }
+            } catch (e: Exception) {
+                runOnUiThread { toast("Gagal membuka: ${e.message ?: "jaringan bermasalah"}") }
+            }
+        }
+    }
+
+    private fun tampilkanKode(kode: String) {
+        tvKode.text = kode
+        llKode.visibility = View.VISIBLE
+    }
+
+    private fun sembunyikanKode() {
+        llKode.visibility = View.GONE
+        tvKode.text = ""
+    }
+
+    private fun salin(teks: String, pesan: String) {
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        cm.setPrimaryClip(ClipData.newPlainText("tempmail", teks))
+        toast(pesan)
+    }
+
+    private fun toast(pesan: String) {
+        Toast.makeText(this, pesan, Toast.LENGTH_SHORT).show()
+    }
+}
