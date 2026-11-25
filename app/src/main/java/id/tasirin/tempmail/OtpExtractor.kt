@@ -206,7 +206,9 @@ object OtpExtractor {
 
     // Kata penghubung pembuka baris nilai — kelanjutan label,
     // bukan kalimat baru (issue #152).
-    private val penghubungBaris = setOf("adalah", "is", "ialah")
+    private val penghubungBaris = setOf(
+        "adalah", "is", "ialah", "yaitu", "yakni", "namely"
+    )
 
     // Pemutus ikatan label: batas kalimat, atau baris baru yang
     // dikelilingi kata nyata — huruf sebelum baris baru pertama

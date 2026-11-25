@@ -202,6 +202,9 @@ class OtpExtractorTest {
         // adalah kelanjutan label, bukan kalimat baru.
         assertNull(OtpExtractor.extract("Kode pos:\n adalah 123456"))
         assertNull(OtpExtractor.extract("ZIP code:\n is 123456"))
+        // Issue #155: penghubung lain yang sama alamiahnya.
+        assertNull(OtpExtractor.extract("Kode pos:\n yaitu 123456"))
+        assertNull(OtpExtractor.extract("Kode pos:\n yakni 123 456"))
     }
 
     @Test
