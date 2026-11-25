@@ -79,9 +79,17 @@ object TempMailApi {
             // diambil tanpa id (#125). Kembar identik berbagi satu
             // penanda tanpa kehilangan apa pun; id kini stabil
             // terhadap SEMUA mutasi daftar.
+            // Sidiknya GANDA (issue #143): dua hash dari susunan
+            // kolom berbeda + panjang tripel — satu hashCode 32-bit
+            // saja bisa bertabrakan antar tripel BERBEDA (subjek
+            // "Aa" vs "BB") dan item kedua lalu tak pernah dipindai
+            // fase-2; tabrakan kini butuh kedua hash sekaligus.
             val idMentah = idString(m.opt("mail_id"))
             val idPesan = if (idMentah.isBlank()) {
-                "tanpa-id-" + (dari + "|" + subjek + "|" + waktu).hashCode()
+                val tripel = dari + "|" + subjek + "|" + waktu
+                val tripelBalik = waktu + "|" + subjek + "|" + dari
+                "tanpa-id-" + tripel.hashCode() + "-" + tripelBalik.hashCode() +
+                    "-" + tripel.length
             } else {
                 idMentah
             }
