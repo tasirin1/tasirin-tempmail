@@ -261,6 +261,9 @@ class MainActivity : AppCompatActivity() {
                 val detail = TempMailApi.fetchDetail(email, item.id)
                 val kode = OtpExtractor.extract(detail.subject + "\n" + detail.text)
                 runOnUiThread {
+                    // Activity bisa sudah berakhir/berputar selama isi email
+                    // diambil — dialog pada Activity mati = crash (issue #3).
+                    if (isFinishing || isDestroyed) return@runOnUiThread
                     val isi = StringBuilder()
                     isi.append("Dari: ").append(detail.from.ifBlank { item.from }).append("\n")
                     isi.append("Waktu: ").append(detail.date.ifBlank { item.time }).append("\n\n")
