@@ -28,10 +28,12 @@ object TempMailApi {
     // punya klien sendiri dengan UA identitas aplikasi polos dan batas
     // body terpisah. Kini lewat HttpSesi — kebijakan timeout, batas body
     // (2 MB, issue #14), dan tampang permintaan seragam di satu tempat.
-    private val http = HttpSesi()
-
+    // Instance dibuat PER PANGGILAN: tempmail.plus tanpa sesi/kuki, jadi
+    // tidak ada yang perlu dibagi — instance bersama membuat polling dan
+    // detail saling menunggu di kunci permintaan HttpSesi sampai
+    // timeout (issue #87). Tumpukan (kelas) tetap satu.
     private fun getJson(url: String): JSONObject {
-        val hasil = http.get(url)
+        val hasil = HttpSesi().get(url)
         if (hasil.kode !in 200..299) throw IllegalStateException("HTTP ${hasil.kode}")
         return JSONObject(hasil.body)
     }
