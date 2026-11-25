@@ -48,6 +48,15 @@ class TempMailApiTest {
     }
 
     @Test
+    fun encPathMengenkodeSegmenPath() {
+        // Issue #104: perilaku encPath dikunci tes — spasi jadi %20
+        // (bukan '+'), plus asli jadi %2B, id numerik apa adanya.
+        assertEquals("a%20b", TempMailApi.encPath("a b"))
+        assertEquals("a%2Bb", TempMailApi.encPath("a+b"))
+        assertEquals("42582210", TempMailApi.encPath("42582210"))
+    }
+
+    @Test
     fun ampersandNumerikTidakDecodeDuaKali() {
         // Issue #102: &#38; / &#x26; adalah '&' numerik — rangkaian
         // "&lt;" yang terbentuk darinya adalah teks, bukan entitas.

@@ -24,7 +24,8 @@ object TempMailApi {
     // Encoder segmen path URL: URLEncoder adalah encoder query (spasi
     // jadi "+"), sedangkan di path "+" berarti plus harfiah — id
     // berkarakter khusus akan terkirim sebagai id berbeda (issue #74).
-    private fun encPath(s: String): String = enc(s).replace("+", "%20")
+    // internal (bukan private) supaya terkunci tes unit (issue #104).
+    internal fun encPath(s: String): String = enc(s).replace("+", "%20")
 
     // SATU tumpukan HTTP untuk semua layanan (issue #52): dulu kelas ini
     // punya klien sendiri dengan UA identitas aplikasi polos dan batas
