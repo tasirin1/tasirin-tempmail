@@ -51,7 +51,13 @@ object TempMailApi {
 
     fun fetchInbox(email: String): List<MailItem> {
         val json = getJson("$BASE/api/mails?email=${enc(email)}&epin=&limit=20")
-        if (!json.optBoolean("result", false)) return emptyList()
+        // Terverifikasi dari API langsung (2026-11-25): inbox kosong yang sah
+        // menjawab result=true dengan mail_list kosong. Jadi result=false
+        // adalah penolakan layanan — laporkan sebagai gagal, jangan ditelan
+        // jadi "0 email" (issue #10).
+        if (!json.optBoolean("result", false)) {
+            throw IllegalStateException("tempmail.plus menolak permintaan ini")
+        }
         val list = json.optJSONArray("mail_list") ?: return emptyList()
         val hasil = ArrayList<MailItem>()
         for (i in 0 until list.length()) {
