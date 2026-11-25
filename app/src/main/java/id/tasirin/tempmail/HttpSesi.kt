@@ -98,9 +98,17 @@ class HttpSesi {
                                 // lain lolos dan kuki basi disimpan terus
                                 // (issue #89).
                                 val expires = reExpires.find(attrs)?.groupValues?.get(1)?.trim()
-                                val mati = isiKuki.isEmpty() ||
-                                    (maxAge != null && maxAge <= 0) ||
-                                    (expires != null && expiresSudahLewat(expires))
+                                // Bila Max-Age hadir, dialah yang berlaku
+                                // (RFC 6265: Max-Age mendahului Expires) —
+                                // kombinasi Max-Age>0 + Expires lampau dari
+                                // fallback warisan server tidak boleh
+                                // membuang kuki yang masih hidup
+                                // (issue #112).
+                                val mati = isiKuki.isEmpty() || when {
+                                    maxAge != null -> maxAge <= 0
+                                    expires != null -> expiresSudahLewat(expires)
+                                    else -> false
+                                }
                                 if (mati) kuki.remove(namaKuki) else kuki[namaKuki] = isiKuki
                             }
                         }
