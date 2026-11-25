@@ -111,8 +111,10 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<Button>(R.id.btnGanti).setOnClickListener {
             val domain = AddressGenerator.DOMAINS[spinnerDomain.selectedItemPosition]
-            setEmail(AddressGenerator.randomLocalPart() + "@" + domain)
-            toast("Email diganti")
+            val baru = AddressGenerator.randomLocalPart() + "@" + domain
+            setEmail(baru)
+            // Rotasi langsung menyalin alamat baru — tidak perlu tombol Salin lagi.
+            salin(baru, "Email baru tersalin")
         }
         findViewById<Button>(R.id.btnPakai).setOnClickListener {
             val bersih = AddressGenerator.sanitizeLocalPart(etNama.text.toString())
@@ -121,7 +123,9 @@ class MainActivity : AppCompatActivity() {
             } else {
                 val domain = AddressGenerator.DOMAINS[spinnerDomain.selectedItemPosition]
                 etNama.text.clear()
-                setEmail("$bersih@$domain")
+                val baru = "$bersih@$domain"
+                setEmail(baru)
+                salin(baru, "Email tersalin")
             }
         }
         findViewById<Button>(R.id.btnSalinKode).setOnClickListener {

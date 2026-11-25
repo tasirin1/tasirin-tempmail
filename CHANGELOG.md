@@ -4,6 +4,13 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-11-25
+
+### Changed
+
+- Tombol "Ganti Email" (rotasi) dan "Pakai" kini langsung menyalin alamat
+  baru ke clipboard — tidak perlu menekan tombol Salin lagi.
+
 ## [0.1.0] - 2026-11-25
 
 ### Added
