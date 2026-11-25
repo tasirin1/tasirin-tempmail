@@ -254,11 +254,21 @@ class MainActivity : AppCompatActivity() {
                 var kodeBaru: String? = null
                 var ambilIsi = 0
                 var sisaBelum = false
+                val hitungTanpaId = HashMap<String, Int>()
                 for (m in items) {
                     if (gen != generasiAlamat) break
-                    // Email tanpa id memakai kunci gabungan isi — kunci kosong
-                    // bersama membuat email lain tak pernah dicek (issue #30).
-                    val kunci = m.id.ifBlank { "tanpa-id:" + m.subject + "|" + m.from + "|" + m.time }
+                    // Email tanpa id memakai kunci gabungan isi + nomor urut
+                    // kemunculan — kunci kosong bersama membuat email lain tak
+                    // pernah dicek (issue #30), dan email identik tanpa nomor
+                    // urut pun masih bertabrakan (issue #34).
+                    val kunci = if (m.id.isNotBlank()) {
+                        m.id
+                    } else {
+                        val dasar = "tanpa-id:" + m.subject + "|" + m.from + "|" + m.time
+                        val urut = hitungTanpaId[dasar] ?: 0
+                        hitungTanpaId[dasar] = urut + 1
+                        "$dasar#$urut"
+                    }
                     if (kunci in idSudahDicek) continue
                     var kode = OtpExtractor.extract(m.subject)
                     var tuntas = kode != null
