@@ -2,7 +2,11 @@ name: Build
 permissions:
   contents: read
 on:
+  # Push TAG tidak memicu workflow ini: rilis punya workflow sendiri
+  # yang juga menjalankan unit test — tes yang sama tidak perlu jalan
+  # dua kali tiap rilis (issue #50).
   push:
+    branches: ["**"]
   pull_request:
   workflow_dispatch:
 
