@@ -4,6 +4,17 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-11-25
+
+### Fixed
+
+- Maraton Audit-3: 2 temuan diperbaiki (issue #33–#34).
+- Kode verifikasi salin-otomatis kini hanya untuk kode yang tiba sesudah
+  sapuan awal inbox lama tuntas seluruhnya — kode lama dari putaran
+  lanjutan sapuan awal tidak lagi tersalin seolah baru tiba (#33).
+- Kunci penanda email tanpa mail_id ditambah nomor urut kemunculan,
+  sehingga dua email identik tanpa id pun masing-masing diperiksa (#34).
+
 ## [0.4.0] - 2026-11-25
 
 ### Fixed
