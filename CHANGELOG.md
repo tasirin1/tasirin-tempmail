@@ -4,6 +4,37 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.6] - 2026-11-25
+
+Hasil Maraton-12 (Audit-12: 4 temuan, issue #135–#138 — semuanya
+Rendah: identitas id sintetis, satu jalur refresh yang belum
+tergerbang, dan dua celah tepi penjaga label kode pos).
+
+### Fixed
+
+- tempmail.plus: id sintetis email tanpa `mail_id` kini memakai
+  peringkat di antara email berkembar-isi yang sama, bukan posisi
+  daftar — posisi terbukti bukan identitas (indeks ekor ikut
+  bergeser saat jendela 20 item meluncur atau item ekor terhapus).
+  Item tanpa-id tunggal selalu berperingkat sama apa pun mutasi
+  daftarnya (issue #135).
+- `setEmail` hanya menyegarkan langsung saat layar aktif —
+  penyelesaian latar (pembuatan alamat, rotasi alamat server)
+  yang mendarat saat layar terjeda tidak lagi melahirkan
+  pengambilan inbox di latar; penyegaran tertunda ke rantai poll
+  saat layar kembali (issue #136).
+- Penjaga OTP jalur cadangan: jendela pandang-balik label
+  diperlebar 40 → 120 karakter (frasa kode pos berpenghubung
+  panjang tidak lagi lolos sebagai OTP), dan batas kalimat kini
+  memutus ikatan label (frasa kode pos di kalimat sebelumnya
+  tidak lagi menelan OTP tanpa pemicu di kalimat ini)
+  (issue #137, #138).
+
+### Tests
+
+- Tes baru: kode pos berpenghubung panjang dilewati; batas
+  kalimat memutus ikatan label.
+
 ## [0.8.5] - 2026-11-25
 
 Hasil Maraton-11 (Audit-11: 6 temuan, issue #129–#134 — semuanya
