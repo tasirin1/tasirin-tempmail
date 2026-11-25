@@ -27,7 +27,8 @@ object OtpExtractor {
     // pemicu PERTAMA, jadi "Kode verifikasi dan kode pos: 40286" lolos
     // dari penjaga berjangkar ^ — frasa kode pos dicari di seluruh
     // jendela konteks sebelum angkanya (issue #85).
-    private val polaKodePos = Regex("""(?i)kode\s*pos\b""")
+    // [\s-]* juga menelan varian bertanda hubung "Kode-pos" (issue #99).
+    private val polaKodePos = Regex("""(?i)kode[\s-]*pos\b""")
     private val polaPemicu = Regex("""(?i)\b(?:kode|code|otp|verifikasi|verification|passcode|pin)\b""")
 
     // Benarkah angka pada kecocokan konteks ini milik frasa "kode pos"?

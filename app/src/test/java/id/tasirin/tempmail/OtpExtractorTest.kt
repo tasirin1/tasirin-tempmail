@@ -105,6 +105,13 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kodePosBertandaHubungDilewati() {
+        // Issue #99: penulisan "Kode-pos" juga frasa alamat.
+        assertNull(OtpExtractor.extract("Kode-pos: 40286"))
+        assertNull(OtpExtractor.extract("Kode-pos 40286"))
+    }
+
+    @Test
     fun kodePosSesudahPemicuLainTetapDilewati() {
         // Issue #85: kata pemicu lain mendahului "kode pos" — penjaga
         // berjangkar awal lolos; angka tetap kode pos, bukan OTP.
