@@ -4,6 +4,16 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.7.1] - 2026-11-25
+
+### Fixed
+
+- tempail.com menolak aplikasi dengan HTTP 403 (gerbang bot
+  Cloudflare) sehingga alamat gagal dibuat di perangkat. Header
+  permintaan layanan berbasis sesi kini menyerupai peramban Android
+  beneran (User-Agent Chrome + Accept + Accept-Language), bukan
+  lagi identitas aplikasi polos.
+
 ## [0.7.0] - 2026-11-25
 
 ### Added
