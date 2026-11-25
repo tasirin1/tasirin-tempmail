@@ -647,7 +647,11 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     sedangCek.set(false)
                     teruskanRefreshTertunda()
-                    if (email != alamatSekarang) return@runOnUiThread
+                    // Pemeriksaan provider disamakan dengan callback
+                    // sukses/detail: kegagalan layanan lama (alamatnya
+                    // kebetulan sama) tidak boleh menimpa status dan
+                    // jeda polling layanan baru (issue #97).
+                    if (email != alamatSekarang || p !== providerAktif) return@runOnUiThread
                     jedaPollingMs = (jedaPollingMs * 2).coerceAtMost(60000L)
                     tvStatus.text = "Gagal cek inbox: ${e.message ?: "jaringan bermasalah"}"
                 }
