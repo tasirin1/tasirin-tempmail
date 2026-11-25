@@ -65,7 +65,11 @@ class MainActivity : AppCompatActivity() {
     private var refreshTertundaTerjadwal = false
     private val refreshTertundaRunnable = Runnable {
         refreshTertundaTerjadwal = false
-        refreshInbox()
+        // Penjaga lifecycle di titik nyala (issue #126): jadwal yang
+        // lahir dari penyelesaian refresh yang terlambat — sesudah
+        // onPause membatalkan jadwal lama — tidak boleh mengambil
+        // jaringan di latar.
+        if (polling && !isFinishing && !isDestroyed) refreshInbox()
     }
 
     private fun batalkanRefreshTertunda() {
@@ -589,9 +593,12 @@ class MainActivity : AppCompatActivity() {
         if (!mintaRefreshLagi.getAndSet(false)) return
         if (jedaMs <= 0L) {
             refreshInbox()
-        } else if (!refreshTertundaTerjadwal) {
+        } else if (!refreshTertundaTerjadwal && polling) {
             // Satu jadwal saja: permintaan tertunda berikutnya selama
             // jadwal ini menunggu terserap oleh penyegaran yang sama.
+            // Gerbang polling: penyelesaian refresh yang terlambat
+            // (sesudah onPause) tidak boleh melahirkan jadwal baru
+            // (issue #126) — onResume memulai rantai dari awal.
             refreshTertundaTerjadwal = true
             handler.postDelayed(refreshTertundaRunnable, jedaMs)
         }
