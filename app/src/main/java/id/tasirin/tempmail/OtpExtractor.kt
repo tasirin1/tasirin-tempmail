@@ -165,7 +165,10 @@ object OtpExtractor {
                         j--
                     }
                     val kata = sb.reverse().toString().lowercase()
-                    if (kata.isEmpty()) return true
+                    // Kata kosong = titik menempel langsung sesudah
+                    // frasa/tanda lain ("Kode pos. 40286", elipsis):
+                    // tidak ada kalimat yang diakhiri di sana —
+                    // BUKAN batas (issue #145).
                     if (kata.length > 1 && kata !in singkatanTitik) return true
                 }
             }

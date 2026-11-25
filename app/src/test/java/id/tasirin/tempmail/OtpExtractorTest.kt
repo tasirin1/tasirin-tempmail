@@ -185,6 +185,13 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun titikMenempelSesudahFrasaBukanBatas() {
+        // Issue #145: "Kode pos." / elipsis tidak memutus ikatan.
+        assertNull(OtpExtractor.extract("Kode pos. 40286"))
+        assertNull(OtpExtractor.extract("Kode pos... 123456"))
+    }
+
+    @Test
     fun titikSingkatanBukanBatasKalimat() {
         // Issue #140: titik singkatan di antara frasa dan angka
         // tidak memutus ikatan label.
