@@ -19,9 +19,15 @@ object OtpExtractor {
     // berupa nomor pesanan/jumlah uang/tahun, dan kode 4 digit asli hampir
     // selalu datang bersama kata pemicu (tertangkap pola konteks) — issue #4.
     // Kembalikan kode pertama yang ketemu menurut urutan prioritas, atau null.
+    // Frasa alamat surat, BUKAN kode verifikasi: "Kode pos: 40286"
+    // tertangkap pola konteks karena kata "kode" + angka (issue #51).
+    private val polaKodePos = Regex("""(?i)^kode\s*pos\b""")
+
     fun extract(teks: String): String? {
         if (teks.isBlank()) return null
         for (m in polaKonteks.findAll(teks)) {
+            // Lewati frasa "kode pos" — angka sesudahnya kode pos.
+            if (polaKodePos.containsMatchIn(m.value)) continue
             val v = m.groupValues[1]
             // Tahun sesudah kata pemicu bukan kode — lewati, cari berikutnya.
             if (v.length == 4 && v.toInt() in 1900..2099) continue

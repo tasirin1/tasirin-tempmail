@@ -81,4 +81,16 @@ class OtpExtractorTest {
             OtpExtractor.extract("Order 998877 confirmed. Your verification code: 555777.")
         )
     }
+
+    @Test
+    fun kodePosBukanKodeVerifikasi() {
+        // Issue #51: frasa "Kode pos" adalah alamat surat, bukan pemicu OTP.
+        assertNull(OtpExtractor.extract("Kode pos: 40286"))
+        assertNull(OtpExtractor.extract("Alamat: Jl. Merdeka, Kode pos 40115, Bandung"))
+        // Kode pos dilewati, kode verifikasi sungguhan tetap ketemu.
+        assertEquals(
+            "731204",
+            OtpExtractor.extract("Kode pos: 40286. Kode verifikasi kamu 731204")
+        )
+    }
 }
