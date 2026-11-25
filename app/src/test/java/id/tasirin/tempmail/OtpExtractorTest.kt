@@ -143,6 +143,20 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kandidatSahSesudahKodePosTetapKetemu() {
+        // Issue #131: kandidat pertama berlabel kode pos tidak boleh
+        // membunuh kandidat sah berikutnya di jalur cadangan.
+        assertEquals(
+            "654321",
+            OtpExtractor.extract("Kode pos: 123456. Gunakan 654321 untuk masuk.")
+        )
+        assertEquals(
+            "789012",
+            OtpExtractor.extract("Kode pos: 123 456. Kode kamu 789 012")
+        )
+    }
+
+    @Test
     fun kodePosEnamDigitDanTerpencarDilewati() {
         // Issue #128: penjaga kode pos juga berlaku di jalur cadangan
         // (pola 6 digit dan pola terpencar), bukan hanya jalur konteks.

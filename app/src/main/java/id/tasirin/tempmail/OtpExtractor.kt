@@ -87,14 +87,17 @@ object OtpExtractor {
         // Jalur cadangan ikut dijaga label kode pos (issue #128):
         // kemarin penjaga hanya berlaku di jalur konteks, jadi
         // "Kode pos: 123456" dan "Kode pos: 123 456" lolos sebagai OTP.
-        polaTerpencar.find(teks)?.let {
-            if (!berlabelKodePos(teks, it.range.first)) {
-                return it.groupValues[1] + it.groupValues[2]
+        // Kandidat ditelusuri SEMUA (findAll, seperti jalur konteks):
+        // kandidat pertama yang ditolak penjaga tidak boleh membunuh
+        // kandidat sah berikutnya (issue #131).
+        for (m in polaTerpencar.findAll(teks)) {
+            if (!berlabelKodePos(teks, m.range.first)) {
+                return m.groupValues[1] + m.groupValues[2]
             }
         }
-        pola6.find(teks)?.let {
-            if (!berlabelKodePos(teks, it.range.first)) {
-                return it.groupValues[1]
+        for (m in pola6.findAll(teks)) {
+            if (!berlabelKodePos(teks, m.range.first)) {
+                return m.groupValues[1]
             }
         }
         return null
