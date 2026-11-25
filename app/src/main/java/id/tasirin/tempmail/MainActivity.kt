@@ -215,7 +215,18 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnSalinKode).setOnClickListener {
             salin(tvKode.text.toString(), "Kode tersalin")
         }
-        findViewById<Button>(R.id.btnSegarkan).setOnClickListener { refreshInbox() }
+        findViewById<Button>(R.id.btnSegarkan).setOnClickListener {
+            // Alamat belum ada (pembuatan awal gagal): Segarkan berarti
+            // coba buat alamat lagi — refreshInbox tanpa alamat hanya
+            // no-op diam-diam (issue #98).
+            if (alamatSekarang.isBlank()) {
+                if (!buatAlamatBaru(acak = true, pesanSalin = null)) {
+                    toast("Sedang membuat alamat…")
+                }
+            } else {
+                refreshInbox()
+            }
+        }
 
         // Siapkan tampilan sesuai layanan aktif, lalu alamat awal:
         // sesi yang masih hidup dipakai lagi; alamat tersimpan hanya
@@ -321,6 +332,7 @@ class MainActivity : AppCompatActivity() {
         // penanda dilepas dan tokennya digugurkan (issue #64).
         tokenBuat++
         sedangBuat = false
+        cobaBuatLagi = 0
         synchronized(idSudahDicek) { idSudahDicek.clear() }
         synchronized(gagalAmbilIsi) { gagalAmbilIsi.clear() }
         sapuAwalSelesai = false
@@ -370,6 +382,8 @@ class MainActivity : AppCompatActivity() {
     // permintaan yang lebih baru.
     private var sedangBuat = false
     private var tokenBuat = 0
+    // Jumlah percobaan ulang otomatis pembuatan alamat awal (issue #98).
+    private var cobaBuatLagi = 0
 
     // Buat alamat (acak/custom) di thread latar — layanan berbasis sesi
     // butuh jaringan. Hasil basi (sudah ada permintaan lebih baru atau
@@ -397,6 +411,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         if (token == tokenBuat) sedangBuat = false
                         if (gen != generasiBuat || p !== providerAktif) return@runOnUiThread
+                        cobaBuatLagi = 0
                         setEmail(baru)
                         // Rotasi langsung menyalin alamat baru — tidak
                         // perlu tombol Salin lagi.
@@ -406,7 +421,23 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         if (token == tokenBuat) sedangBuat = false
                         if (gen != generasiBuat || p !== providerAktif) return@runOnUiThread
-                        if (alamatSekarang.isBlank()) tvEmail.text = "(gagal menyiapkan alamat)"
+                        if (alamatSekarang.isBlank()) {
+                            tvEmail.text = "(gagal menyiapkan alamat)"
+                            // Pemulihan otomatis terbatas (issue #98):
+                            // tanpa ini, satu kegagalan jaringan sesaat
+                            // saat aplikasi dibuka mematikan polling
+                            // selamanya sampai pengguna bertindak —
+                            // penjaga alamat kosong membuat pollRunnable
+                            // tidak melakukan apa pun.
+                            if (cobaBuatLagi < 3) {
+                                cobaBuatLagi++
+                                handler.postDelayed({
+                                    if (alamatSekarang.isBlank() && !isFinishing && !isDestroyed) {
+                                        buatAlamatBaru(acak = true, pesanSalin = null)
+                                    }
+                                }, 5000L)
+                            }
+                        }
                         toast("Gagal membuat alamat: ${e.message ?: "jaringan bermasalah"}")
                     }
                 }
