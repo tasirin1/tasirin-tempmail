@@ -34,10 +34,15 @@ object AddressGenerator {
     }
 
     // Bersihkan nama ketikan pengguna jadi nama lokal yang sah:
-    // huruf kecil, hanya a-z 0-9 . _ -, tanpa pemisah di ujung.
+    // huruf kecil, hanya a-z 0-9 . _ -, titik ganda dirapatkan, tanpa
+    // pemisah di ujung, dan maksimal 64 karakter (batas bagian lokal
+    // alamat email) — issue #21.
     fun sanitizeLocalPart(mentah: String): String {
         return mentah.lowercase()
             .filter { it in 'a'..'z' || it in '0'..'9' || it == '.' || it == '_' || it == '-' }
+            .replace(Regex("\\.+"), ".")
+            .trim('.', '-', '_')
+            .take(64)
             .trim('.', '-', '_')
     }
 }

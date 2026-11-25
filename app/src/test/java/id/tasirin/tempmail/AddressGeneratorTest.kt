@@ -29,4 +29,10 @@ class AddressGeneratorTest {
         assertEquals("", AddressGenerator.sanitizeLocalPart("..."))
         assertEquals("", AddressGenerator.sanitizeLocalPart("!!!"))
     }
+
+    @Test
+    fun sanitizeMerapatkanTitikGandaDanMembatasiPanjang() {
+        assertEquals("budi.santoso", AddressGenerator.sanitizeLocalPart("budi..santoso"))
+        assertEquals(64, AddressGenerator.sanitizeLocalPart("a".repeat(80)).length)
+    }
 }
