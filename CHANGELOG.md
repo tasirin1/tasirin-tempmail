@@ -4,6 +4,46 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.2] - 2026-11-25
+
+Hasil Maraton-8 (Audit-8: 13 temuan, issue #106–#118 — self-review
+Maraton-7: cabang gagal pemulihan sesi, kebersihan laporan alamat,
+dan penajaman tepi penjaga OTP).
+
+### Fixed
+
+- Pemulihan sesi/klien yang ikut gagal kini tetap melaporkan alamat
+  barunya, jadi polling tidak terbungkam permanen oleh penjaga alamat
+  basi (issue #106).
+- Laporan alamat hasil pemulihan tempmail.is dibersihkan saat alamat
+  dicatat lewat jalur biasa — ganti alamat manual tidak lagi ditarik
+  kembali ke alamat pemulihan (issue #107).
+- Pemicu pemulihan klien tempmail.is dipersempit ke HTTP 401/403/404;
+  5xx/429 tidak lagi membuang alamat yang sehat (issue #108).
+- Satu elemen `emails[]` tempmail.now yang bukan objek dilewati,
+  bukan menggagalkan seluruh pengambilan inbox (issue #109).
+- Sisa pesan JSONException mentah di tempmail.is (daftar domain,
+  alamat acak/custom) dibungkus pesan yang bisa dipahami (issue #110).
+- Pesan tempmail.is tanpa kolom id memakai kunci sidik isi, bukan
+  runtuh ke id "0" bersama (issue #111).
+- Penilaian kematian kuki: Max-Age mendahului Expires sesuai
+  RFC 6265 (issue #112).
+- Refresh tertunda sesudah kegagalan menunggu jeda backoff polling —
+  tidak lagi beruntun tanpa jeda saat jaringan mati (issue #113).
+- Percobaan ulang pembuatan alamat menjadi Runnable bernama yang
+  dibatalkan saat ganti layanan/destroy, dan berjalan diam-diam
+  tanpa toast berulang (issue #114, #115).
+- Penjaga OTP: frasa "kode posnya" ikut dikenali sebagai kode pos,
+  dan kata berakhiran "zip" (unzip/gzip) tidak lagi menolak kode
+  yang sah (issue #116, #117).
+- Karakter U+E000 asli di isi email tidak lagi berubah menjadi "&"
+  saat ditampilkan (issue #118).
+
+### Tests
+
+- Tes baru: "kode posnya" dilewati, "unzip code" tetap terdeteksi,
+  dan karakter penanda asli pengirim utuh sesudah htmlToText.
+
 ## [0.8.1] - 2026-11-25
 
 Hasil Maraton-7 (Audit-7: 26 temuan, issue #80–#105 — self-review
