@@ -562,6 +562,10 @@ class MainActivity : AppCompatActivity() {
                     // Activity bisa sudah berakhir/berputar selama isi email
                     // diambil — dialog pada Activity mati = crash (issue #3).
                     if (isFinishing || isDestroyed) return@runOnUiThread
+                    // Alamat/layanan sudah berganti selama pengambilan:
+                    // dialog email lama tidak boleh muncul di atas alamat
+                    // baru (issue #47).
+                    if (email != alamatSekarang || p !== providerAktif) return@runOnUiThread
                     val isi = StringBuilder()
                     isi.append("Dari: ").append(detail.from.ifBlank { item.from }).append("\n")
                     isi.append("Waktu: ").append(detail.date.ifBlank { item.time }).append("\n\n")
@@ -582,7 +586,9 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 runOnUiThread {
                     sedangBuka.set(false)
-                    toast("Gagal membuka: ${e.message ?: "jaringan bermasalah"}")
+                    if (email == alamatSekarang && p === providerAktif) {
+                        toast("Gagal membuka: ${e.message ?: "jaringan bermasalah"}")
+                    }
                 }
             }
     }
