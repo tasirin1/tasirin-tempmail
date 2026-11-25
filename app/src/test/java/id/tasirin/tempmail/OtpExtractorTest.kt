@@ -143,6 +143,14 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kodePosPosesifKuMuDilewati() {
+        // Issue #124: sufiks posesif menempel -ku/-mu juga frasa
+        // alamat — jangan tampil sebagai kode verifikasi.
+        assertNull(OtpExtractor.extract("Kode posku: 40115"))
+        assertNull(OtpExtractor.extract("kode posmu 40115"))
+    }
+
+    @Test
     fun kodePosnyaDenganSufiksNyaDilewati() {
         // Issue #116: frasa alamat "kode posnya …" jangan tampil
         // sebagai kode verifikasi.
