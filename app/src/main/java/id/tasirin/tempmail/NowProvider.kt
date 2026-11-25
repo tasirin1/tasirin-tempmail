@@ -99,6 +99,7 @@ class NowProvider : MailProvider {
                         // Sesi ternyata sudah berganti alamat di server.
                         alamatAktif = emailSegar
                         alamatDariServer = emailSegar
+                        isiTerakhir.kosongkan()
                         return@synchronized alamatAktif
                     }
                     hasil = http.postForm(
@@ -116,6 +117,11 @@ class NowProvider : MailProvider {
                     throw IllegalStateException("tempmail.now: respons tidak lengkap dari server")
                 }
                 alamatDariServer = null
+                // Alamat berganti = cache isi alamat lama dibuang,
+                // samakan dengan IsProvider.catatEmail — tanpa ini
+                // fetchDetail bisa menyajikan isi alamat lama lewat id
+                // yang bertabrakan di jendela sebelum polling (issue #92).
+                isiTerakhir.kosongkan()
                 alamatAktif
             } else {
                 // Sesi kemungkinan mati di server: buang dan mulai sesi
