@@ -4,6 +4,33 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.4] - 2026-11-25
+
+Hasil Maraton-10 (Audit-10: 4 temuan, issue #125–#128 — semuanya
+Rendah: sisa id sintetis plus, gerbang lifecycle jadwal refresh,
+dan kelengkapan penjaga kode pos).
+
+### Fixed
+
+- tempmail.plus: id sintetis email tanpa `mail_id` dibedakan per
+  posisi daftar (dua email kembar tidak lagi tertelan penanda yang
+  sama), dan membuka email tanpa id kini memberi pesan jujur
+  "tidak memberi id — isinya tidak tersedia", bukan "sudah
+  terhapus" (issue #125).
+- Jadwal refresh tertunda digerbang keadaan polling di titik
+  penjadwalan DAN titik nyala — penyelesaian refresh yang terlambat
+  sesudah layar dijeda tidak lagi melahirkan pengambilan di latar
+  (issue #126).
+- Penjaga OTP: sufiks posesif "-kau/-anda" ikut dikenali, dan
+  penjaga label kode pos kini berlaku juga di jalur cadangan
+  (angka 6 digit dan angka terpencar) — "Kode pos: 123456" tidak
+  lagi tampil sebagai kode verifikasi (issue #127, #128).
+
+### Tests
+
+- Tes baru: "kode poskau/posanda" dilewati; "Kode pos: 123456",
+  "Kode pos: 123 456", dan "ZIP code: 123 456" dilewati.
+
 ## [0.8.3] - 2026-11-25
 
 Hasil Maraton-9 (Audit-9: 6 temuan, issue #119–#124 — semuanya
