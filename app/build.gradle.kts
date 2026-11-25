@@ -52,9 +52,9 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.15.0")
+    // Hanya yang benar-benar dipakai kode/layout (issue #15): appcompat.
+    // core-ktx dan material pernah terdaftar tanpa satu pun pemakaian.
     implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
 
     testImplementation("junit:junit:4.13.2")
 }
