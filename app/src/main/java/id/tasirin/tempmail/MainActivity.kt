@@ -299,6 +299,10 @@ class MainActivity : AppCompatActivity() {
         // lama.
         generasiAlamat++
         alamatSekarang = ""
+        // Pembuatan alamat layanan lama yang masih terbang ditinggalkan:
+        // penanda dilepas dan tokennya digugurkan (issue #64).
+        tokenBuat++
+        sedangBuat = false
         synchronized(idSudahDicek) { idSudahDicek.clear() }
         synchronized(gagalAmbilIsi) { gagalAmbilIsi.clear() }
         sapuAwalSelesai = false
@@ -327,10 +331,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Penjaga pembuatan alamat yang sedang berjalan (issue #64):
+    // ketukan beruntun tidak menumpuk panggilan jaringan; token
+    // memastikan callback lama tidak melepaskan penanda milik
+    // permintaan yang lebih baru.
+    private var sedangBuat = false
+    private var tokenBuat = 0
+
     // Buat alamat (acak/custom) di thread latar — layanan berbasis sesi
     // butuh jaringan. Hasil basi (sudah ada permintaan lebih baru atau
     // layanan berganti) dibuang.
     private fun buatAlamatBaru(acak: Boolean, namaBersih: String? = null, pesanSalin: String?) {
+        if (sedangBuat) return
+        sedangBuat = true
+        val token = ++tokenBuat
         val p = providerAktif
         val gen = ++generasiBuat
         val domain = domainDaftar.getOrNull(spinnerDomain.selectedItemPosition)
@@ -345,6 +359,7 @@ class MainActivity : AppCompatActivity() {
                         p.alamatCustom(namaBersih ?: "", d)
                     }
                     runOnUiThread {
+                        if (token == tokenBuat) sedangBuat = false
                         if (gen != generasiBuat || p !== providerAktif) return@runOnUiThread
                         setEmail(baru)
                         // Rotasi langsung menyalin alamat baru — tidak
@@ -353,6 +368,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 } catch (e: Exception) {
                     runOnUiThread {
+                        if (token == tokenBuat) sedangBuat = false
                         if (gen != generasiBuat || p !== providerAktif) return@runOnUiThread
                         if (alamatSekarang.isBlank()) tvEmail.text = "(gagal menyiapkan alamat)"
                         toast("Gagal membuat alamat: ${e.message ?: "jaringan bermasalah"}")
@@ -361,6 +377,7 @@ class MainActivity : AppCompatActivity() {
             }
         } catch (e: RejectedExecutionException) {
             // Activity sedang dihancurkan — abaikan dengan aman.
+            if (token == tokenBuat) sedangBuat = false
         }
     }
 
