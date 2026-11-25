@@ -198,7 +198,13 @@ class IsProvider : MailProvider {
             try {
                 ambilInboxSekali(alamat, dariPemulihan = false)
             } catch (e: IllegalStateException) {
-                if (e.message?.contains("HTTP ") == true) {
+                // Pemicu dipersempit seperti NowProvider (issue #108):
+                // hanya penolakan sesi 401/403/404 yang berarti uuid
+                // mati — 5xx/429 adalah server ngambek sesaat dan
+                // TIDAK boleh membuang alamat yang sehat.
+                val kodeHttp = Regex("HTTP (\\d+)").find(e.message ?: "")
+                    ?.groupValues?.get(1)?.toIntOrNull()
+                if (kodeHttp == 401 || kodeHttp == 403 || kodeHttp == 404) {
                     resetKlien()
                     try {
                         val hasilBaru = ambilInboxSekali(alamat, dariPemulihan = true)
