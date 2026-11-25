@@ -49,6 +49,11 @@ class MainActivity : AppCompatActivity() {
     // Executor khusus baca email: ketukan pengguna tidak mengantre di
     // belakang polling yang bisa makan 2x timeout (issue #8).
     private val executorDetail = Executors.newSingleThreadExecutor()
+
+    // Executor khusus aksi pengguna (buat alamat + muat domain): tidak
+    // boleh mengantre di belakang polling yang fase-2-nya bisa lama
+    // (issue #48). Polling tetap di executor sendiri.
+    private val executorAksi = Executors.newSingleThreadExecutor()
     private val sedangCek = AtomicBoolean(false)
     private val sedangBuka = AtomicBoolean(false)
 
@@ -239,7 +244,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             // Domain dinamis (tempmail.is): ambil dari server di latar.
             try {
-                executor.execute {
+                executorAksi.execute {
                     try {
                         val d = p.domains()
                         runOnUiThread {
@@ -324,7 +329,7 @@ class MainActivity : AppCompatActivity() {
         val gen = ++generasiBuat
         val domain = domainDaftar.getOrNull(spinnerDomain.selectedItemPosition)
         try {
-            executor.execute {
+            executorAksi.execute {
                 try {
                     val baru = if (acak) {
                         p.alamatAcak(domain)
@@ -370,6 +375,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         executor.shutdownNow()
         executorDetail.shutdownNow()
+        executorAksi.shutdownNow()
         super.onDestroy()
     }
 
