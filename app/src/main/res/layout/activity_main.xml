@@ -55,9 +55,37 @@
         android:orientation="vertical"
         android:padding="18dp">
 
+        <!-- Tombol salin/ganti di paling atas kartu, di atas pemilih
+             layanan (permintaan owner 2026-11-25). -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnSalin"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:backgroundTint="@color/biru_utama"
+                android:text="@string/tombol_salin_email"
+                android:textColor="@color/putih" />
+
+            <Button
+                android:id="@+id/btnGanti"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/biru_utama"
+                android:text="@string/tombol_ganti_email"
+                android:textColor="@color/putih" />
+        </LinearLayout>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
             android:text="@string/label_layanan"
             android:textColor="@color/teks_utama"
             android:textStyle="bold" />
@@ -88,32 +116,6 @@
             android:textIsSelectable="true"
             android:textSize="16sp"
             android:textStyle="bold" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnSalin"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:backgroundTint="@color/biru_utama"
-                android:text="@string/tombol_salin_email"
-                android:textColor="@color/putih" />
-
-            <Button
-                android:id="@+id/btnGanti"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/biru_utama"
-                android:text="@string/tombol_ganti_email"
-                android:textColor="@color/putih" />
-        </LinearLayout>
 
         <!-- Blok nama sendiri: disembunyikan untuk layanan yang tidak
              mendukung nama pilihan pengguna (tempmail.now). -->
