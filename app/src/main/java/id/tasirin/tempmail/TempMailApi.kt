@@ -79,16 +79,19 @@ object TempMailApi {
             // diambil tanpa id (#125). Kembar identik berbagi satu
             // penanda tanpa kehilangan apa pun; id kini stabil
             // terhadap SEMUA mutasi daftar.
-            // Sidiknya GANDA (issue #143): dua hash dari susunan
-            // kolom berbeda + panjang tripel — satu hashCode 32-bit
-            // saja bisa bertabrakan antar tripel BERBEDA (subjek
-            // "Aa" vs "BB") dan item kedua lalu tak pernah dipindai
-            // fase-2; tabrakan kini butuh kedua hash sekaligus.
+            // Sidiknya GANDA (issue #143): hashCode + panjang
+            // tripel — satu hashCode 32-bit saja bisa bertabrakan
+            // antar tripel BERBEDA (subjek "Aa" vs "BB") dan item
+            // kedua lalu tak pernah dipindai fase-2. Komponen
+            // keduanya FNV-1a (issue #148): dua hashCode polinomial
+            // basis-31 atas susunan kolom berbeda TIDAK merdeka —
+            // tabrakan satu kolom berpanjang sama menembus keduanya
+            // sekaligus (terbukti simulasi); FNV-1a berstruktur
+            // beda, jadi tabrakan kelas itu tidak lolos.
             val idMentah = idString(m.opt("mail_id"))
             val idPesan = if (idMentah.isBlank()) {
                 val tripel = dari + "|" + subjek + "|" + waktu
-                val tripelBalik = waktu + "|" + subjek + "|" + dari
-                "tanpa-id-" + tripel.hashCode() + "-" + tripelBalik.hashCode() +
+                "tanpa-id-" + tripel.hashCode() + "-" + fnv1a(tripel) +
                     "-" + tripel.length
             } else {
                 idMentah
@@ -180,5 +183,16 @@ object TempMailApi {
         return t.replace(reSpasi, " ")
             .replace(reBaris3, "\n\n")
             .trim()
+    }
+
+    // FNV-1a 32-bit atas teks UTF-8 — komponen sidik kedua yang
+    // strukturnya berbeda dari hashCode polinomial (issue #148).
+    private fun fnv1a(teks: String): Int {
+        var h = -375076303 // 0x811C9DC5 sebagai Int bertanda
+        for (b in teks.toByteArray(Charsets.UTF_8)) {
+            h = h xor (b.toInt() and 0xFF)
+            h *= 16777619 // 0x01000193; luapan Int memang sifat FNV
+        }
+        return h
     }
 }
