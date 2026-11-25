@@ -31,11 +31,9 @@ class NowProvider : MailProvider {
     // wajib @Volatile seperti field sesi lain (issue #41).
     @Volatile
     private var alamatDariServer: String? = null
-    // Cache isi diganti SATU KALI per ambil inbox (tukar referensi
-    // atomik), bukan clear()+isi ulang: thread detail tidak pernah
-    // melihat keadaan setengah kosong (issue #43).
-    @Volatile
-    private var isiTerakhir: Map<String, MailDetail> = emptyMap()
+    // Cache isi bersama (KotakIsi): diganti atomik per ambil inbox,
+    // bukan clear()+isi ulang (issue #43).
+    private val isiTerakhir = KotakIsi()
 
     // Urai JSON dengan pesan yang bisa dipahami pengguna — respons
     // non-JSON (halaman perantara) tidak boleh bocor sebagai
@@ -67,7 +65,7 @@ class NowProvider : MailProvider {
         alamatAktif = ""
         csrf = ""
         alamatDariServer = null
-        isiTerakhir = emptyMap()
+        isiTerakhir.kosongkan()
     }
 
     override fun domains(): List<String> = emptyList()
@@ -176,7 +174,7 @@ class NowProvider : MailProvider {
                 text = TempMailApi.htmlToText(m.optString("body"))
             )
         }
-        isiTerakhir = isiBaru
+        isiTerakhir.gantiSemua(isiBaru)
         return hasilList
     }
 

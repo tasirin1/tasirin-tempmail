@@ -41,8 +41,7 @@ class IsProvider : MailProvider {
 
     // Isi email terakhir dari fetchInbox, menurut id pesan — fetchDetail
     // membaca dari sini karena API tidak punya endpoint detail.
-    // Disentuh thread polling dan thread detail — wajib tersinkron.
-    private val isiTerakhir = java.util.Collections.synchronizedMap(HashMap<String, MailDetail>())
+    private val isiTerakhir = KotakIsi()
 
     // Keadaan delta kotak masuk (hanya disentuh sambil memegang
     // kunciSesi): id pesan terbesar yang sudah diterima + daftar pesan
@@ -88,7 +87,7 @@ class IsProvider : MailProvider {
         // Alamat berganti = kotak masuk berganti: delta mulai dari nol.
         idTerbesar = 0
         daftarPesan.clear()
-        isiTerakhir.clear()
+        isiTerakhir.kosongkan()
         return alamatAktif
     }
 
@@ -174,11 +173,14 @@ class IsProvider : MailProvider {
             if (daftarPesan.none { it.id == idPesan }) {
                 baru.add(MailItem(id = idPesan, from = dari, subject = subjek, time = waktu))
             }
-            isiTerakhir[idPesan] = MailDetail(
-                from = dari,
-                subject = subjek,
-                date = waktu,
-                text = m.optString("body")
+            isiTerakhir.taruh(
+                idPesan,
+                MailDetail(
+                    from = dari,
+                    subject = subjek,
+                    date = waktu,
+                    text = m.optString("body")
+                )
             )
         }
         // Pesan baru dari server selalu lebih baru dari yang sudah ada.
