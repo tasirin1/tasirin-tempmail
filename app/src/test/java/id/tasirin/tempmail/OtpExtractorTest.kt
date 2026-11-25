@@ -157,6 +157,16 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun frasaPosBarisSebelumnyaTidakMenelanOtpKonteks() {
+        // Issue #146: pemutus baris baru berlaku juga di jalur
+        // konteks — OTP 4 digit di baris berikut tetap ketemu.
+        assertEquals(
+            "4455",
+            OtpExtractor.extract("Kode pos dicatat\nGunakan 4455 untuk masuk")
+        )
+    }
+
+    @Test
     fun frasaPosKalimatSebelumnyaTidakMenelanOtpKonteks() {
         // Issue #142: penjaga konteks kini juga memutus ikatan pada
         // batas kalimat — OTP 4 digit tanpa pemicu sesudah kalimat
