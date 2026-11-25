@@ -340,6 +340,7 @@ class MainActivity : AppCompatActivity() {
         adapterInbox.notifyDataSetChanged()
         tvKosong.visibility = View.VISIBLE
         sembunyikanKode()
+        tvStatus.text = ""
         providerAktif = p
         generasiBuat++
         getSharedPreferences("tempmail", Context.MODE_PRIVATE)
@@ -459,6 +460,9 @@ class MainActivity : AppCompatActivity() {
         adapterInbox.notifyDataSetChanged()
         tvKosong.visibility = View.VISIBLE
         sembunyikanKode()
+        // Baris status milik alamat lama tidak boleh bertahan di atas
+        // daftar kosong alamat baru (issue #96).
+        tvStatus.text = ""
         // Selaraskan spinner domain dengan alamat yang baru dipasang,
         // dengan penjaga yang sama seperti muatDomain — alur ganti
         // layanan dulu melewatkan ini (issue #63).
