@@ -57,6 +57,9 @@ class MainActivity : AppCompatActivity() {
     private val sedangCek = AtomicBoolean(false)
     private val sedangBuka = AtomicBoolean(false)
 
+    // Dialog isi email yang sedang tampil (ditutup di onDestroy).
+    private var dialogDetail: AlertDialog? = null
+
     private var alamatSekarang: String = ""
     private var spinnerSiap = false
     private var polling = false
@@ -256,7 +259,9 @@ class MainActivity : AppCompatActivity() {
                     try {
                         val d = p.domains()
                         runOnUiThread {
-                            if (p === providerAktif) muatDomain(d)
+                            // Activity lama (sesudah rotasi) tidak
+                            // disentuh lagi (issue #67).
+                            if (!isFinishing && !isDestroyed && p === providerAktif) muatDomain(d)
                         }
                     } catch (e: Exception) {
                         // Domain gagal dimuat bukan keadaan fatal: tombol
@@ -401,6 +406,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        dialogDetail?.dismiss()
+        dialogDetail = null
         executor.shutdownNow()
         executorDetail.shutdownNow()
         executorAksi.shutdownNow()
@@ -635,7 +642,9 @@ class MainActivity : AppCompatActivity() {
                             tampilkanKode(kode)
                         }
                     }
-                    builder.show()
+                    // Simpan rujukan dialog supaya bisa ditutup bersih
+                    // saat Activity dihancurkan (issue #67).
+                    dialogDetail = builder.show()
                 }
             } catch (e: Exception) {
                 runOnUiThread {
