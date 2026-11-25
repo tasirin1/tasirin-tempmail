@@ -16,11 +16,6 @@ data class MailDetail(val from: String, val subject: String, val date: String, v
 object TempMailApi {
 
     private const val BASE = "https://tempmail.plus"
-    // Karakter wilayah privat penahan '&' hasil decode numerik (#102).
-    private const val PENANDA_AMP = "\uE000"
-    // Penanda sementara nonkarakter untuk memulihkan U+E000 asli
-    // pengirim (issue #118) — U+FFFE tidak pernah muncul di teks sah.
-    private const val PENANDA_ASLI = "\uFFFE"
 
     private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
 
@@ -112,8 +107,11 @@ object TempMailApi {
     private val reBr = Regex("(?i)<br\\s*/?>")
     private val reTutupP = Regex("(?i)</p>")
     private val reTag = Regex("<[^>]+>")
-    private val reEntitasAngka = Regex("&#(\\d+);")
-    private val reEntitasHex = Regex("(?i)&#x([0-9a-f]+);")
+    // SATU pola untuk semua entitas (numerik, hex, bernama): decode
+    // satu lintasan — teks hasil decode tidak pernah dipindai ulang,
+    // jadi "&lt;" bentukan dari &#38; tetap teks (issue #73/#102)
+    // TANPA skema penanda yang tertukar di karakter langka (#123).
+    private val reEntitas = Regex("&(#\\d+|#[xX][0-9a-fA-F]+|lt|gt|quot|nbsp|amp);")
     private val reSpasi = Regex("[ \\t]+")
     private val reBaris3 = Regex("\n{3,}")
 
@@ -122,12 +120,6 @@ object TempMailApi {
         return String(Character.toChars(cp))
     }
 
-    // '&' hasil decode entitas numerik (&#38; / &#x26;) ditahan sebagai
-    // karakter penanda wilayah privat selama tahap entitas bernama:
-    // tanpa ini, "&#38;lt;" ter-decode dua kali menjadi "<" padahal
-    // maksud pengirim adalah teks "&lt;" (issue #102).
-    private fun tahanAmpersand(s: String): String = if (s == "&") PENANDA_AMP else s
-
     // Ubah HTML sederhana jadi teks polos: buang blok script/style beserta
     // isinya (issue #13), buang tag, rapikan entitas umum + entitas numerik.
     fun htmlToText(html: String): String {
@@ -135,31 +127,29 @@ object TempMailApi {
         t = t.replace(reBr, "\n")
         t = t.replace(reTutupP, "\n\n")
         t = t.replace(reTag, "")
-        // Karakter penanda yang SUDAH ada di isi email asli diloloskan
-        // dengan penggandaan (pola escape klasik): tanpa ini, U+E000
-        // harfiah dari pengirim ikut dipulihkan menjadi "&" di akhir
-        // (issue #118).
-        t = t.replace(PENANDA_AMP, PENANDA_AMP + PENANDA_AMP)
-        // Entitas numerik diterjemahkan per titik kode penuh (emoji utuh),
-        // dan nilai yang mustahil dibiarkan apa adanya — tidak melempar,
-        // tidak terpotong 16 bit (issue #27).
-        t = t.replace(reEntitasAngka) { m -> tahanAmpersand(titikKode(m.groupValues[1].toIntOrNull(), m.value)) }
-        t = t.replace(reEntitasHex) { m -> tahanAmpersand(titikKode(m.groupValues[1].toIntOrNull(16), m.value)) }
-        // &amp; diterjemahkan TERAKHIR (issue #73): teks yang sengaja
-        // dikodekan dua kali seperti &amp;lt; harus tampil sebagai
-        // teks "&lt;" sebagaimana ditulis pengirim, bukan "<".
-        // (Baris "&#39;" lama dibuang: sudah ditangani entitas numerik.)
-        t = t.replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&quot;", "\"")
-            .replace("&nbsp;", " ")
-            .replace("&amp;", "&")
-            // Pulihkan penanda: pasangan = karakter asli pengirim
-            // (lewat penanda sementara), tunggal = "&" hasil decode
-            // numerik (issue #118).
-            .replace(PENANDA_AMP + PENANDA_AMP, PENANDA_ASLI)
-            .replace(PENANDA_AMP, "&")
-            .replace(PENANDA_ASLI, PENANDA_AMP)
+        // Decode entitas SATU lintasan (issue #123): hasil decode tidak
+        // dipindai ulang, jadi teks yang sengaja dikodekan dua kali
+        // (&#38;lt;, &amp;lt;) tampil sebagai teks "&lt;" sebagaimana
+        // ditulis pengirim (issue #73/#102), dan karakter langka milik
+        // pengirim (U+E000/U+FFFE, atau entitas numeriknya) lolos utuh
+        // — skema penanda #102/#118 yang tertukar di jalur decode
+        // dibuang total. Entitas numerik diterjemahkan per titik kode
+        // penuh (emoji utuh); nilai mustahil dibiarkan apa adanya
+        // (issue #27).
+        t = t.replace(reEntitas) { m ->
+            val isi = m.groupValues[1]
+            when {
+                isi.startsWith("#x") || isi.startsWith("#X") ->
+                    titikKode(isi.substring(2).toIntOrNull(16), m.value)
+                isi.startsWith("#") ->
+                    titikKode(isi.substring(1).toIntOrNull(), m.value)
+                isi == "lt" -> "<"
+                isi == "gt" -> ">"
+                isi == "quot" -> "\""
+                isi == "nbsp" -> " "
+                else -> "&" // amp
+            }
+        }
         return t.replace(reSpasi, " ")
             .replace(reBaris3, "\n\n")
             .trim()

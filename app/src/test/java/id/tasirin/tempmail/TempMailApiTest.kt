@@ -68,6 +68,21 @@ class TempMailApiTest {
     }
 
     @Test
+    fun decodeSatuLintasanTidakMenukarKarakterLangka() {
+        // Issue #123: skema penanda lama tertukar di jalur decode —
+        // decode kini satu lintasan, hasil decode tidak dipindai ulang.
+        // Entitas numerik U+E000 tampil sebagai U+E000, bukan '&'.
+        assertEquals("\uE000", TempMailApi.htmlToText("&#57344;"))
+        assertEquals("\uE000", TempMailApi.htmlToText("&#xE000;"))
+        // U+FFFE harfiah dan entitasnya lolos utuh.
+        assertEquals("teks \uFFFE polos", TempMailApi.htmlToText("teks \uFFFE polos"))
+        assertEquals("\uFFFE", TempMailApi.htmlToText("&#65534;"))
+        // '&' hasil decode menempel sebelum U+E000 asli: urutan utuh.
+        assertEquals("&\uE000y", TempMailApi.htmlToText("&#38;\uE000y"))
+        assertEquals("x\uE000&&", TempMailApi.htmlToText("x\uE000&#38;&#38;"))
+    }
+
+    @Test
     fun karakterPenandaAsliPengirimTidakBerubah() {
         // Issue #118: U+E000 harfiah di isi email adalah milik
         // pengirim — tidak boleh tampil sebagai '&'.
