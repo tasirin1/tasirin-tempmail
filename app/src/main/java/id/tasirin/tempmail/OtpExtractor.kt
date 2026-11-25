@@ -31,7 +31,10 @@ object OtpExtractor {
     // dari penjaga berjangkar ^ — frasa kode pos dicari di seluruh
     // jendela konteks sebelum angkanya (issue #85).
     // [\s-]* juga menelan varian bertanda hubung "Kode-pos" (issue #99).
-    private val polaKodePos = Regex("""(?i)kode[\s-]*pos\b""")
+    // Sufiks -nya ikut dikenali ("kode posnya 40115" adalah frasa
+    // alamat yang wajar) — \b polos sesudah "pos" gagal cocok di sana
+    // (issue #116).
+    private val polaKodePos = Regex("""(?i)kode[\s-]*pos(?:nya)?\b""")
     // Padanan Inggrisnya: "ZIP code" / "postal code" (issue #100).
     private val polaKodePosInggris = Regex("""(?i)\b(?:zip|postal)[\s-]*code\b""")
     private val polaEkorInggris = Regex("""(?i)(?:zip|postal)[\s-]*$""")

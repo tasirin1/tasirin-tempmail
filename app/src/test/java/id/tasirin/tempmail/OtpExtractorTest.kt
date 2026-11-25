@@ -123,6 +123,14 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kodePosnyaDenganSufiksNyaDilewati() {
+        // Issue #116: frasa alamat "kode posnya …" jangan tampil
+        // sebagai kode verifikasi.
+        assertNull(OtpExtractor.extract("Kode Posnya: 40286"))
+        assertNull(OtpExtractor.extract("Jl. Merdeka No. 5, kode posnya 40115"))
+    }
+
+    @Test
     fun kodePosSesudahPemicuLainTetapDilewati() {
         // Issue #85: kata pemicu lain mendahului "kode pos" — penjaga
         // berjangkar awal lolos; angka tetap kode pos, bukan OTP.
