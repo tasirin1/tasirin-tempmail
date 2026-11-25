@@ -68,10 +68,15 @@ class MainActivity : AppCompatActivity() {
     private var itemInbox: List<MailItem> = emptyList()
     private lateinit var adapterInbox: SimpleAdapter
 
+    // Jeda polling berjalan: 8 detik saat sehat, mundur berlipat sampai
+    // 60 detik saat gagal supaya tidak memukul server terus (issue #11).
+    @Volatile
+    private var jedaPollingMs = 8000L
+
     private val pollRunnable = object : Runnable {
         override fun run() {
             refreshInbox()
-            if (polling) handler.postDelayed(this, 8000)
+            if (polling) handler.postDelayed(this, jedaPollingMs)
         }
     }
 
@@ -238,6 +243,7 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     sedangCek.set(false)
                     if (email != alamatSekarang) return@runOnUiThread
+                    jedaPollingMs = 8000L
                     itemInbox = items
                     dataInbox.clear()
                     for (m in items) {
@@ -267,6 +273,7 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     sedangCek.set(false)
                     if (email != alamatSekarang) return@runOnUiThread
+                    jedaPollingMs = (jedaPollingMs * 2).coerceAtMost(60000L)
                     tvStatus.text = "Gagal cek inbox: ${e.message ?: "jaringan bermasalah"}"
                 }
             }
