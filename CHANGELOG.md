@@ -4,6 +4,38 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.3] - 2026-11-25
+
+Hasil Maraton-9 (Audit-9: 6 temuan, issue #119–#124 — semuanya
+Rendah: konsistensi antarlaysan dan celah tepi penjaga OTP/teks).
+
+### Fixed
+
+- tempmail.is: satu elemen `messages[]` yang bukan objek dilewati,
+  bukan menggagalkan seluruh pengambilan inbox dengan pesan JSON
+  mentah (issue #119).
+- tempmail.plus: item tanpa `mail_id` memakai kunci sidik isi,
+  bukan id kosong bersama yang membuka email yang salah (issue #120).
+- Refresh tertunda terjadwal menjadi Runnable bernama: dibatalkan
+  saat layar dijeda/ditutup dan tidak bertumpuk (issue #121).
+- Penjaga OTP: frasa "zip code" yang mendahului pemicu lain tidak
+  lagi menelan kode yang sah, dan sufiks posesif "kode posku/posmu"
+  ikut dikenali sebagai kode pos (issue #122, #124).
+
+### Changed
+
+- `htmlToText` menerjemahkan entitas dalam SATU lintasan (regex
+  gabungan numerik/hex/bernama): hasil decode tidak dipindai ulang,
+  jadi teks berkode ganda tetap tampil sebagai teks, dan skema
+  karakter penanda yang tertukar di karakter langka dibuang total
+  (issue #123).
+
+### Tests
+
+- Tes baru: kode sesudah "zip code" tetap terdeteksi, "kode
+  posku/posmu" dilewati, dan decode satu lintasan tidak menukar
+  karakter U+E000/U+FFFE milik pengirim maupun hasil decode-nya.
+
 ## [0.8.2] - 2026-11-25
 
 Hasil Maraton-8 (Audit-8: 13 temuan, issue #106–#118 — self-review
