@@ -29,15 +29,26 @@ object OtpExtractor {
     // jendela konteks sebelum angkanya (issue #85).
     // [\s-]* juga menelan varian bertanda hubung "Kode-pos" (issue #99).
     private val polaKodePos = Regex("""(?i)kode[\s-]*pos\b""")
+    // Padanan Inggrisnya: "ZIP code" / "postal code" (issue #100).
+    private val polaKodePosInggris = Regex("""(?i)\b(?:zip|postal)[\s-]*code\b""")
+    private val polaEkorInggris = Regex("""(?i)(?:zip|postal)[\s-]*$""")
     private val polaPemicu = Regex("""(?i)\b(?:kode|code|otp|verifikasi|verification|passcode|pin)\b""")
 
-    // Benarkah angka pada kecocokan konteks ini milik frasa "kode pos"?
+    // Benarkah angka pada kecocokan konteks ini milik frasa kode pos?
     // Syaratnya: ada frasa kode pos di jendela sebelum angka DAN tidak
     // ada kata pemicu lain sesudah frasa itu — bila ada ("Kode pos
     // dicatat. Kode verifikasi: 112233"), angkanya milik pemicu lain.
-    private fun kodePosUntukAngkaIni(nilaiCocok: String, angka: String): Boolean {
-        val awalan = nilaiCocok.dropLast(angka.length)
-        val cocokPos = polaKodePos.findAll(awalan).lastOrNull() ?: return false
+    private fun kodePosUntukAngkaIni(teks: String, m: MatchResult): Boolean {
+        val awalan = m.value.dropLast(m.groupValues[1].length)
+        // "code" yang merupakan ekor "ZIP code"/"postal code": kata
+        // pertamanya berada di LUAR jendela cocok (tepat sebelum kata
+        // pemicu), jadi periksa juga teks persis sebelum kecocokan.
+        val sebelum = teks.substring(maxOf(0, m.range.first - 12), m.range.first)
+        if (polaEkorInggris.containsMatchIn(sebelum)) return true
+        val cocokId = polaKodePos.findAll(awalan).lastOrNull()
+        val cocokEn = polaKodePosInggris.findAll(awalan).lastOrNull()
+        val cocokPos = listOfNotNull(cocokId, cocokEn).maxByOrNull { it.range.last }
+            ?: return false
         val sesudah = awalan.substring(cocokPos.range.last + 1)
         return polaPemicu.find(sesudah) == null
     }
@@ -46,7 +57,7 @@ object OtpExtractor {
         if (teks.isBlank()) return null
         for (m in polaKonteks.findAll(teks)) {
             // Lewati frasa "kode pos" — angka sesudahnya kode pos.
-            if (kodePosUntukAngkaIni(m.value, m.groupValues[1])) continue
+            if (kodePosUntukAngkaIni(teks, m)) continue
             val v = m.groupValues[1]
             // Tahun sesudah kata pemicu bukan kode — lewati, cari berikutnya.
             if (v.length == 4 && v.toInt() in 1900..2099) continue

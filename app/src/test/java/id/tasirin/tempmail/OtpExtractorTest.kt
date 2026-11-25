@@ -112,6 +112,15 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kodePosInggrisDilewati() {
+        // Issue #100: "ZIP code"/"postal code" juga frasa alamat.
+        assertNull(OtpExtractor.extract("ZIP code: 90210"))
+        assertNull(OtpExtractor.extract("Postal code 40115 Indonesia"))
+        // Kode sungguhan berbahasa Inggris tetap ketemu.
+        assertEquals("112233", OtpExtractor.extract("Your verification code is 112233"))
+    }
+
+    @Test
     fun kodePosSesudahPemicuLainTetapDilewati() {
         // Issue #85: kata pemicu lain mendahului "kode pos" — penjaga
         // berjangkar awal lolos; angka tetap kode pos, bukan OTP.
