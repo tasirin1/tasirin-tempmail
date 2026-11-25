@@ -1,10 +1,6 @@
 package id.tasirin.tempmail
 
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.URL
 import java.net.URLEncoder
 
 // Satu email di daftar kotak masuk.
@@ -23,44 +19,16 @@ object TempMailApi {
 
     private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
 
+    // SATU tumpukan HTTP untuk semua layanan (issue #52): dulu kelas ini
+    // punya klien sendiri dengan UA identitas aplikasi polos dan batas
+    // body terpisah. Kini lewat HttpSesi — kebijakan timeout, batas body
+    // (2 MB, issue #14), dan tampang permintaan seragam di satu tempat.
+    private val http = HttpSesi()
+
     private fun getJson(url: String): JSONObject {
-        val conn = URL(url).openConnection() as HttpURLConnection
-        try {
-            conn.requestMethod = "GET"
-            conn.connectTimeout = 15000
-            conn.readTimeout = 15000
-            // Versi diambil dari BuildConfig — tidak basi lagi (issue #18).
-            conn.setRequestProperty("User-Agent", "TasirinTempMail/${BuildConfig.VERSION_NAME} (Android)")
-            conn.setRequestProperty("Accept", "application/json")
-            val code = conn.responseCode
-            val stream = if (code in 200..299) conn.inputStream else conn.errorStream
-            val body = stream?.let {
-                BufferedReader(InputStreamReader(it, Charsets.UTF_8)).use { r -> bacaTerbatas(r) }
-            } ?: ""
-            if (code !in 200..299) throw IllegalStateException("HTTP $code")
-            return JSONObject(body)
-        } finally {
-            // Koneksi wajib dilepas juga di jalur gagal (issue #9).
-            conn.disconnect()
-        }
-    }
-
-    // Batas ukuran body respons yang diterima (issue #14): aplikasi hanya
-    // butuh daftar 20 email dan satu isi email, bukan berkas raksasa.
-    private const val BATAS_BODY = 2_000_000
-
-    private fun bacaTerbatas(r: BufferedReader): String {
-        val sb = StringBuilder()
-        val buf = CharArray(8192)
-        while (true) {
-            val n = r.read(buf)
-            if (n < 0) break
-            sb.append(buf, 0, n)
-            if (sb.length > BATAS_BODY) {
-                throw IllegalStateException("Respons server terlalu besar")
-            }
-        }
-        return sb.toString()
+        val hasil = http.get(url)
+        if (hasil.kode !in 200..299) throw IllegalStateException("HTTP ${hasil.kode}")
+        return JSONObject(hasil.body)
     }
 
     // mail_id bisa berupa angka atau teks di JSON — samakan jadi String.
