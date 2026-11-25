@@ -95,6 +95,11 @@ object TempMailApi {
 
     fun fetchDetail(email: String, mailId: String): MailDetail {
         val json = getJson("$BASE/api/mails/${enc(mailId)}?email=${enc(email)}&epin=")
+        // Konsisten dengan fetchInbox (issue #10): penolakan layanan adalah
+        // kegagalan yang jelas, bukan email kosong (issue #29).
+        if (json.has("result") && !json.optBoolean("result", true)) {
+            throw IllegalStateException("Email tidak tersedia (mungkin sudah terhapus)")
+        }
         var text = json.optString("text")
         if (text.isBlank()) {
             val html = json.optString("html")
