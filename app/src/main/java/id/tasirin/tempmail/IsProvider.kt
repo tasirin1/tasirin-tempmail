@@ -21,6 +21,13 @@ class IsProvider : MailProvider {
     override val bisaCustom = true
 
     private val http = HttpSesi()
+
+    // Kunci seluruh keadaan sesi: provider adalah singleton yang disentuh
+    // thread polling, thread detail, dan thread aksi bersamaan. Tanpa
+    // kunci, dua thread bisa membuat dua klien berbeda dan alamat tampil
+    // tidak cocok dengan inbox yang dicek (issue #36).
+    private val kunciSesi = Any()
+
     @Volatile
     private var uuidKlien: String = ""
     @Volatile
@@ -43,6 +50,7 @@ class IsProvider : MailProvider {
     }
 
     // Buat klien bila belum ada; klien pertama langsung membawa satu alamat.
+    // Wajib dipanggil sambil memegang kunciSesi.
     private fun pastikanKlien() {
         if (uuidKlien.isNotBlank()) return
         val json = post("/client/create", listOf("app_uuid" to APP_UUID))
@@ -56,7 +64,7 @@ class IsProvider : MailProvider {
         return alamatAktif
     }
 
-    override fun domains(): List<String> {
+    override fun domains(): List<String> = synchronized(kunciSesi) {
         pastikanKlien()
         if (daftarDomain.isEmpty()) {
             val json = post("/domains", listOf("uuid" to uuidKlien))
@@ -70,21 +78,22 @@ class IsProvider : MailProvider {
             }
             daftarDomain = hasil
         }
-        return daftarDomain.map { it.second }
+        daftarDomain.map { it.second }
     }
 
-    override fun alamatAcak(domain: String?): String {
+    override fun alamatAcak(domain: String?): String = synchronized(kunciSesi) {
         // Domain acak ditentukan server; pilihan domain pengguna hanya
         // berlaku untuk alamat custom di layanan ini.
         if (uuidKlien.isBlank()) {
             pastikanKlien()
-            return alamatAktif
+            alamatAktif
+        } else {
+            val json = post("/email/random", listOf("uuid" to uuidKlien))
+            catatEmail(json.getJSONObject("email"))
         }
-        val json = post("/email/random", listOf("uuid" to uuidKlien))
-        return catatEmail(json.getJSONObject("email"))
     }
 
-    override fun alamatCustom(namaBersih: String, domain: String): String {
+    override fun alamatCustom(namaBersih: String, domain: String): String = synchronized(kunciSesi) {
         pastikanKlien()
         if (daftarDomain.isEmpty()) domains()
         val domainId = daftarDomain.firstOrNull { it.second == domain }?.first
@@ -94,10 +103,10 @@ class IsProvider : MailProvider {
             "/email/custom",
             listOf("uuid" to uuidKlien, "alias" to namaBersih, "domain_id" to domainId.toString())
         )
-        return catatEmail(json.getJSONObject("email"))
+        catatEmail(json.getJSONObject("email"))
     }
 
-    override fun fetchInbox(alamat: String): List<MailItem> {
+    override fun fetchInbox(alamat: String): List<MailItem> = synchronized(kunciSesi) {
         pastikanKlien()
         val json = post(
             "/messages",
@@ -107,11 +116,11 @@ class IsProvider : MailProvider {
                 "known_message_id" to "0"
             )
         )
-        val arr = json.optJSONArray("messages") ?: return emptyList()
+        val arr = json.optJSONArray("messages")
         val hasil = ArrayList<MailItem>()
         isiTerakhir.clear()
-        for (i in 0 until arr.length()) {
-            val m = arr.getJSONObject(i)
+        for (i in 0 until (arr?.length() ?: 0)) {
+            val m = arr!!.getJSONObject(i)
             val idPesan = m.optLong("id").toString()
             // Kolom from berbentuk string JSON: {"name":..., "address":...}
             var dari = m.optString("from")
@@ -133,7 +142,7 @@ class IsProvider : MailProvider {
                 text = m.optString("body")
             )
         }
-        return hasil
+        hasil
     }
 
     override fun alamatAktif(): String? = alamatAktif.ifBlank { null }
