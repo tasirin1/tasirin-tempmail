@@ -34,4 +34,16 @@ class TempMailApiTest {
             TempMailApi.htmlToText("&quot;Halo&quot; &amp; &#x41;&#66;")
         )
     }
+
+    @Test
+    fun entitasBerkodeGandaTidakDiterjemahkanDuaKali() {
+        // Issue #73: &amp;lt; adalah teks "&lt;" yang ditulis pengirim
+        // secara sengaja (mis. contoh kode HTML di email) — tampil apa
+        // adanya, bukan berubah jadi "<".
+        assertEquals(
+            "&lt;div&gt;",
+            TempMailApi.htmlToText("&amp;lt;div&amp;gt;")
+        )
+        assertEquals("<div>", TempMailApi.htmlToText("&lt;div&gt;"))
+    }
 }

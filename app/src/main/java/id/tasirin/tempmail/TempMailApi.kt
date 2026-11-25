@@ -110,12 +110,15 @@ object TempMailApi {
         // tidak terpotong 16 bit (issue #27).
         t = t.replace(reEntitasAngka) { m -> titikKode(m.groupValues[1].toIntOrNull(), m.value) }
         t = t.replace(reEntitasHex) { m -> titikKode(m.groupValues[1].toIntOrNull(16), m.value) }
-        t = t.replace("&nbsp;", " ")
-            .replace("&amp;", "&")
-            .replace("&lt;", "<")
+        // &amp; diterjemahkan TERAKHIR (issue #73): teks yang sengaja
+        // dikodekan dua kali seperti &amp;lt; harus tampil sebagai
+        // teks "&lt;" sebagaimana ditulis pengirim, bukan "<".
+        t = t.replace("&lt;", "<")
             .replace("&gt;", ">")
             .replace("&quot;", "\"")
             .replace("&#39;", "'")
+            .replace("&nbsp;", " ")
+            .replace("&amp;", "&")
         return t.replace(reSpasi, " ")
             .replace(reBaris3, "\n\n")
             .trim()
