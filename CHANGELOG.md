@@ -4,6 +4,62 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.8.1] - 2026-11-25
+
+Hasil Maraton-7 (Audit-7: 26 temuan, issue #80–#105 — self-review
+Maraton-6: pemulihan sesi yang aman, penjaga OTP yang lebih ketat,
+pemulihan pembuatan alamat, dan penguncian tes).
+
+### Fixed
+
+- tempmail.now: pemulihan sesi hanya jalan untuk penolakan sesi oleh
+  server (HTTP 401/403/404) — timeout jaringan biasa tidak lagi
+  membuang alamat yang sehat, dan alamat hasil pemulihan kini
+  dilaporkan ke layar (issue #80).
+- tempmail.is: klien yang uuid-nya ditolak server kini dipulihkan
+  dengan klien baru dan alamatnya dilaporkan ke layar (issue #82);
+  delta kotak masuk dua fase — kursor hanya maju sesudah seluruh
+  batch teruraikan, satu pesan rusak tidak lagi menghilangkan pesan
+  lain (issue #83); daftar delta dibatasi 100 pesan dengan dedupe
+  O(1) (issue #86).
+- Penjaga alamat basi babak kedua di kedua provider sesi: sesi baru
+  yang beralamat berbeda tidak diserahkan untuk label alamat lama
+  (issue #91); cache isi tempmail.now dibersihkan saat ganti alamat
+  (issue #92).
+- OTP: penjaga "kode pos" tidak lagi bisa dilewati pemicu lain yang
+  mendahului, varian "Kode-pos", maupun "ZIP code"/"postal code";
+  pola terpencar menolak nomor telepon berpemisah spasi (issue #85,
+  #99, #100, #101).
+- UI: ketukan Pakai/Ganti saat pembuatan alamat berjalan memberi
+  umpan balik dan nama yang diketik tidak terhapus (issue #84);
+  refresh yang tertelan refresh lain kini diingat dan dijalankan
+  sesudahnya (issue #94); domain layanan lama dikosongkan saat ganti
+  layanan (issue #95); baris status dibersihkan saat ganti
+  layanan/alamat (issue #96); handler gagal refresh memeriksa
+  provider (issue #97); pembuatan alamat awal yang gagal dicoba
+  ulang otomatis sampai 3 kali dan tombol Segarkan memicu pembuatan
+  alamat (issue #98); eviksi penanda email yang sudah dicek memakai
+  kunci yang sama dengan penandaan (issue #93).
+- tempmail.plus: polling dan buka detail tidak lagi saling menunggu
+  di satu kunci HTTP (issue #87).
+- Sisa jalur JSONException mentah dibungkus pesan yang bisa dipahami
+  (issue #88); Expires kuki diuraikan sungguhan (issue #89);
+  KotakIsi sepenuhnya tersinkron (issue #90); htmlToText tidak lagi
+  men-decode ampersand numerik dua kali (issue #102).
+
+### Changed
+
+- Entri changelog [0.8.0] yang tertinggal dari commit rilis kini
+  masuk riwayat, dan catatan rilis v0.8.0 di GitHub diperbarui
+  (issue #81).
+- Workflow Release tidak lagi bisa di-dispatch manual dari ref lain
+  (mencegah APK rilis terbit tertimpa build commit lain) (issue #105).
+
+### Tests
+
+- Tes komposisi PlusProvider sungguhan menggantikan tes tautologi;
+  perilaku encPath terkunci tes unit (issue #103, #104).
+
 ## [0.8.0] - 2026-11-25
 
 Hasil Maraton-6 (Audit-6: 44 temuan, issue #36–#79 — kestabilan
