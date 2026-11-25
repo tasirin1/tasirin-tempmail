@@ -23,13 +23,29 @@ object OtpExtractor {
     // Kembalikan kode pertama yang ketemu menurut urutan prioritas, atau null.
     // Frasa alamat surat, BUKAN kode verifikasi: "Kode pos: 40286"
     // tertangkap pola konteks karena kata "kode" + angka (issue #51).
-    private val polaKodePos = Regex("""(?i)^kode\s*pos\b""")
+    // TANPA jangkar awal: nilai cocok pola konteks selalu diawali kata
+    // pemicu PERTAMA, jadi "Kode verifikasi dan kode pos: 40286" lolos
+    // dari penjaga berjangkar ^ — frasa kode pos dicari di seluruh
+    // jendela konteks sebelum angkanya (issue #85).
+    private val polaKodePos = Regex("""(?i)kode\s*pos\b""")
+    private val polaPemicu = Regex("""(?i)\b(?:kode|code|otp|verifikasi|verification|passcode|pin)\b""")
+
+    // Benarkah angka pada kecocokan konteks ini milik frasa "kode pos"?
+    // Syaratnya: ada frasa kode pos di jendela sebelum angka DAN tidak
+    // ada kata pemicu lain sesudah frasa itu — bila ada ("Kode pos
+    // dicatat. Kode verifikasi: 112233"), angkanya milik pemicu lain.
+    private fun kodePosUntukAngkaIni(nilaiCocok: String, angka: String): Boolean {
+        val awalan = nilaiCocok.dropLast(angka.length)
+        val cocokPos = polaKodePos.findAll(awalan).lastOrNull() ?: return false
+        val sesudah = awalan.substring(cocokPos.range.last + 1)
+        return polaPemicu.find(sesudah) == null
+    }
 
     fun extract(teks: String): String? {
         if (teks.isBlank()) return null
         for (m in polaKonteks.findAll(teks)) {
             // Lewati frasa "kode pos" — angka sesudahnya kode pos.
-            if (polaKodePos.containsMatchIn(m.value)) continue
+            if (kodePosUntukAngkaIni(m.value, m.groupValues[1])) continue
             val v = m.groupValues[1]
             // Tahun sesudah kata pemicu bukan kode — lewati, cari berikutnya.
             if (v.length == 4 && v.toInt() in 1900..2099) continue

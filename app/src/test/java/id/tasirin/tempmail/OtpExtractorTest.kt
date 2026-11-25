@@ -103,4 +103,18 @@ class OtpExtractorTest {
             OtpExtractor.extract("Kode pos: 40286. Kode verifikasi kamu 731204")
         )
     }
+
+    @Test
+    fun kodePosSesudahPemicuLainTetapDilewati() {
+        // Issue #85: kata pemicu lain mendahului "kode pos" — penjaga
+        // berjangkar awal lolos; angka tetap kode pos, bukan OTP.
+        assertNull(OtpExtractor.extract("Kode verifikasi dan kode pos: 40286"))
+        assertNull(OtpExtractor.extract("PIN dan kode pos: 40286"))
+        // Tapi kode milik pemicu yang datang SESUDAH penyebutan kode
+        // pos (tanpa angka di antaranya) tidak boleh ikut tertelan.
+        assertEquals(
+            "112233",
+            OtpExtractor.extract("Kode pos dicatat. Kode verifikasi: 112233")
+        )
+    }
 }
