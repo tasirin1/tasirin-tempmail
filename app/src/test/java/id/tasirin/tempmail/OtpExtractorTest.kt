@@ -223,6 +223,9 @@ class OtpExtractorTest {
         assertNull(OtpExtractor.extract("Kode pos dsb. 40286"))
         assertNull(OtpExtractor.extract("Kode pos dll. tercatat 123456"))
         assertNull(OtpExtractor.extract("Kode pos PT. Maju adalah 123456"))
+        // Issue #151: singkatan alamat >=4 huruf yang terbukti.
+        assertNull(OtpExtractor.extract("Kode pos prov. Jawa Barat adalah 123456"))
+        assertNull(OtpExtractor.extract("Kode pos kec. Cilebar adalah 123456"))
     }
 
     @Test
