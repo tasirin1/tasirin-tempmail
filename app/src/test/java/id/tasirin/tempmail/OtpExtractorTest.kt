@@ -38,6 +38,13 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun angkaEmpatDigitBukanKode() {
+        // Nomor pesanan dan jumlah uang bukan kode verifikasi (issue #4).
+        assertNull(OtpExtractor.extract("Order 1234 sudah dikirim, total Rp 5000"))
+        assertNull(OtpExtractor.extract("Gunakan 4321 untuk masuk."))
+    }
+
+    @Test
     fun tahunBukanKode() {
         assertNull(OtpExtractor.extract("Copyright 2026 PT Contoh. All rights reserved."))
     }
