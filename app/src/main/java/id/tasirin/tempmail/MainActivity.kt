@@ -225,10 +225,12 @@ class MainActivity : AppCompatActivity() {
                 setEmail(tersimpan)
             }
             p.tanpaSesi -> {
-                val awal = p.alamatAcak(null)
-                sesuaikanPilihanDomain(awal)
+                // Pembuatan alamat selalu di thread latar (issue #65):
+                // kontrak provider tidak menjamin alamatAcak bebas
+                // jaringan, jadi jangan panggil dari thread UI.
                 spinnerSiap = true
-                setEmail(awal)
+                tvEmail.text = "Menyiapkan alamat…"
+                buatAlamatBaru(acak = true, pesanSalin = null)
             }
             else -> {
                 spinnerSiap = true
@@ -323,7 +325,10 @@ class MainActivity : AppCompatActivity() {
         when {
             dariSesi != null -> setEmail(dariSesi)
             !tersimpan.isNullOrBlank() -> setEmail(tersimpan)
-            p.tanpaSesi -> setEmail(p.alamatAcak(null))
+            p.tanpaSesi -> {
+                tvEmail.text = "Menyiapkan alamat…"
+                buatAlamatBaru(acak = true, pesanSalin = null)
+            }
             else -> {
                 tvEmail.text = "Menyiapkan alamat…"
                 buatAlamatBaru(acak = true, pesanSalin = null)

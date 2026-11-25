@@ -1,8 +1,13 @@
 package id.tasirin.tempmail
 
-// Satu layanan email sekali pakai. Semua fungsi blocking — panggil dari
-// thread latar. Layanan berbasis sesi menyimpan keadaan sesinya sendiri
-// di dalam objek provider.
+// Satu layanan email sekali pakai. Layanan berbasis sesi menyimpan
+// keadaan sesinya sendiri di dalam objek provider.
+//
+// KONTRAK BENANG (issue #65): alamatAcak, alamatCustom, fetchInbox,
+// fetchDetail, dan domains() provider BERSESI boleh jaringan — panggil
+// HANYA dari thread latar. Yang boleh dari thread UI hanya:
+//   - domains() provider TANPA sesi (wajib daftar lokal konstan),
+//   - alamatAktif() dan alamatServer() (wajib baca field @Volatile saja).
 interface MailProvider {
 
     // Id stabil untuk simpanan preferensi, mis. "plus".
