@@ -55,7 +55,12 @@ object OtpExtractor {
         val cocokPos = listOfNotNull(cocokId, cocokEn).maxByOrNull { it.range.last }
         if (cocokPos != null) {
             val sesudah = awalan.substring(cocokPos.range.last + 1)
-            return polaPemicu.find(sesudah) == null
+            // Batas kalimat sesudah frasa juga memutus ikatan
+            // (issue #142): frasa pos di kalimat sebelumnya tidak
+            // memiliki angka di kalimat ini — kemarin penjaga
+            // konteks menelan OTP 4 digit tanpa pemicu yang jatuh
+            // sesudah kalimat kode pos.
+            return polaPemicu.find(sesudah) == null && !adaBatasKalimat(sesudah)
         }
         // "code" yang merupakan ekor "ZIP code"/"postal code": kata
         // pertamanya berada di LUAR jendela cocok (tepat sebelum kata
@@ -69,7 +74,10 @@ object OtpExtractor {
         if (polaEkorInggris.containsMatchIn(sebelum)) {
             val pertama = polaPemicu.find(awalan) ?: return true
             val sesudahPertama = awalan.substring(pertama.range.last + 1)
-            return polaPemicu.find(sesudahPertama) == null
+            // Pemutus batas kalimat yang sama dengan cabang frasa
+            // (issue #142).
+            return polaPemicu.find(sesudahPertama) == null &&
+                !adaBatasKalimat(sesudahPertama)
         }
         return false
     }

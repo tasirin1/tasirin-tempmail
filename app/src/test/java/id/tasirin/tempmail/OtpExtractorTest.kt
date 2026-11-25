@@ -157,6 +157,21 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun frasaPosKalimatSebelumnyaTidakMenelanOtpKonteks() {
+        // Issue #142: penjaga konteks kini juga memutus ikatan pada
+        // batas kalimat — OTP 4 digit tanpa pemicu sesudah kalimat
+        // kode pos tetap ketemu.
+        assertEquals(
+            "4455",
+            OtpExtractor.extract("Kode pos tersimpan. Gunakan 4455 untuk masuk.")
+        )
+        assertEquals(
+            "4455",
+            OtpExtractor.extract("Your zip code is stored. Use 4455 for login")
+        )
+    }
+
+    @Test
     fun barisBaruSesudahLabelBukanPemutus() {
         // Issue #141: label di satu baris, nilainya di baris
         // berikut — ikatan label tetap berlaku.
