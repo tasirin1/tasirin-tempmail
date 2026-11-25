@@ -37,12 +37,23 @@ class NowProvider : MailProvider {
     @Volatile
     private var isiTerakhir: Map<String, MailDetail> = emptyMap()
 
+    // Urai JSON dengan pesan yang bisa dipahami pengguna — respons
+    // non-JSON (halaman perantara) tidak boleh bocor sebagai
+    // JSONException mentah (issue #55).
+    private fun uraiJson(body: String): JSONObject {
+        return try {
+            JSONObject(body)
+        } catch (e: Exception) {
+            throw IllegalStateException("tempmail.now: respons bukan JSON (mungkin halaman perantara)")
+        }
+    }
+
     // Wajib dipanggil sambil memegang kunciSesi.
     private fun pastikanSesi() {
         if (alamatAktif.isNotBlank()) return
         val hasil = http.get("$BASE/api/temp_email")
         if (hasil.kode !in 200..299) throw IllegalStateException("tempmail.now: HTTP ${hasil.kode}")
-        val json = JSONObject(hasil.body)
+        val json = uraiJson(hasil.body)
         alamatAktif = json.getString("email")
         csrf = json.optString("csrf_token")
     }
@@ -73,7 +84,7 @@ class NowProvider : MailProvider {
                 mapOf("X-CSRF-Token" to csrf)
             )
             if (hasil.kode in 200..299) {
-                val json = JSONObject(hasil.body)
+                val json = uraiJson(hasil.body)
                 alamatAktif = json.getString("new_email")
                 alamatDariServer = null
                 alamatAktif
@@ -113,7 +124,7 @@ class NowProvider : MailProvider {
         pastikanSesi()
         val hasil = http.get("$BASE/fetch_emails")
         if (hasil.kode !in 200..299) throw IllegalStateException("tempmail.now: HTTP ${hasil.kode}")
-        val json = JSONObject(hasil.body)
+        val json = uraiJson(hasil.body)
         // Server adalah sumber kebenaran alamat (kedaluwarsa = diputar).
         val dilaporkan = json.optString("temp_email")
         if (dilaporkan.isNotBlank() && dilaporkan != alamatAktif) {

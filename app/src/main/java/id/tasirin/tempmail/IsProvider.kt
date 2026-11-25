@@ -56,7 +56,13 @@ class IsProvider : MailProvider {
     private fun post(rute: String, kolom: List<Pair<String, String>>): JSONObject {
         val hasil = http.postForm("$BASE$rute", kolom)
         if (hasil.kode !in 200..299) throw IllegalStateException("tempmail.is: HTTP ${hasil.kode}")
-        val json = JSONObject(hasil.body)
+        // Respons non-JSON (halaman perantara/gerbang) jangan bocor
+        // sebagai JSONException mentah ke pengguna (issue #55).
+        val json = try {
+            JSONObject(hasil.body)
+        } catch (e: Exception) {
+            throw IllegalStateException("tempmail.is: respons bukan JSON (mungkin halaman perantara)")
+        }
         if (json.has("error")) throw IllegalStateException("tempmail.is menolak: ${json.optString("error")}")
         return json
     }
