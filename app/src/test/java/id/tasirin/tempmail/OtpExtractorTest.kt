@@ -38,6 +38,12 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kodePanjangTidakTerpotong() {
+        // Angka 10 digit bukan kode 8 digit yang terpotong (issue #5).
+        assertNull(OtpExtractor.extract("Your verification code is 1234567890"))
+    }
+
+    @Test
     fun angkaEmpatDigitBukanKode() {
         // Nomor pesanan dan jumlah uang bukan kode verifikasi (issue #4).
         assertNull(OtpExtractor.extract("Order 1234 sudah dikirim, total Rp 5000"))
