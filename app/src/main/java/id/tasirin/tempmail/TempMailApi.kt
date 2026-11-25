@@ -25,19 +25,23 @@ object TempMailApi {
 
     private fun getJson(url: String): JSONObject {
         val conn = URL(url).openConnection() as HttpURLConnection
-        conn.requestMethod = "GET"
-        conn.connectTimeout = 15000
-        conn.readTimeout = 15000
-        conn.setRequestProperty("User-Agent", "TasirinTempMail/0.1.0 (Android)")
-        conn.setRequestProperty("Accept", "application/json")
-        val code = conn.responseCode
-        val stream = if (code in 200..299) conn.inputStream else conn.errorStream
-        val body = stream?.let {
-            BufferedReader(InputStreamReader(it, Charsets.UTF_8)).use { r -> r.readText() }
-        } ?: ""
-        conn.disconnect()
-        if (code !in 200..299) throw IllegalStateException("HTTP $code")
-        return JSONObject(body)
+        try {
+            conn.requestMethod = "GET"
+            conn.connectTimeout = 15000
+            conn.readTimeout = 15000
+            conn.setRequestProperty("User-Agent", "TasirinTempMail/0.1.0 (Android)")
+            conn.setRequestProperty("Accept", "application/json")
+            val code = conn.responseCode
+            val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+            val body = stream?.let {
+                BufferedReader(InputStreamReader(it, Charsets.UTF_8)).use { r -> r.readText() }
+            } ?: ""
+            if (code !in 200..299) throw IllegalStateException("HTTP $code")
+            return JSONObject(body)
+        } finally {
+            // Koneksi wajib dilepas juga di jalur gagal (issue #9).
+            conn.disconnect()
+        }
     }
 
     // mail_id bisa berupa angka atau teks di JSON — samakan jadi String.
