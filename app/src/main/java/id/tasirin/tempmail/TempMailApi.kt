@@ -60,6 +60,16 @@ object TempMailApi {
             throw IllegalStateException("tempmail.plus menolak permintaan ini")
         }
         val list = json.optJSONArray("mail_list") ?: return emptyList()
+        // Sidik isi tiap elemen, untuk id sintetis di bawah.
+        val hashIsi = IntArray(list.length()) { j ->
+            val e = list.optJSONObject(j)
+            if (e == null) {
+                0
+            } else {
+                (e.optString("from_mail") + "|" + e.optString("subject") + "|" +
+                    e.optString("time")).hashCode()
+            }
+        }
         val hasil = ArrayList<MailItem>()
         for (i in 0 until list.length()) {
             val m = list.optJSONObject(i) ?: continue
@@ -68,21 +78,20 @@ object TempMailApi {
             val waktu = m.optString("time")
             // Item tanpa mail_id TIDAK boleh berbagi id "" bersama
             // (detail membuka email yang salah, penanda UI bertabrakan)
-            // — pakai kunci sidik isi + posisi dalam daftar, pola
-            // #42/#111 (issue #120). Posisi ikut serta: dua email
-            // kembar (pengirim/subjek/waktu sama) kemarin menghasilkan
-            // id sintetis yang sama persis dan email kedua tertelan
-            // penanda yang pertama (issue #125). Posisi dihitung dari
-            // EKOR daftar (issue #129): email baru menumpuk di kepala,
-            // jadi hitungan dari kepala menggeser id semua item lama
-            // setiap ada email baru — penanda fase-2 tak mengenali
-            // item itu lagi dan kode lamanya tersalin ulang. Dari
-            // ekor, id item lama stabil (pola yang sama dengan kunci
-            // gabungan MainActivity, issue #35).
+            // — pakai kunci sidik isi, pola #42/#111 (issue #120).
+            // Email kembar (sidik sama) dibedakan PERINGKAT di antara
+            // sesama kembar dari segmen ekor (issue #125, #129, #135):
+            // posisi daftar terbukti bukan identitas — indeks kepala
+            // bergeser tiap email baru (#129), indeks ekor bergeser
+            // saat jendela 20 item meluncur atau item ekor terhapus
+            // (#135). Peringkat kembar stabil terhadap semua mutasi
+            // itu; item tanpa-id TUNGGAL (kasus umum) selalu
+            // berperingkat 1, apa pun yang terjadi pada daftar.
             val idMentah = idString(m.opt("mail_id"))
             val idPesan = if (idMentah.isBlank()) {
-                "tanpa-id-" + (dari + "|" + subjek + "|" + waktu).hashCode() +
-                    "-" + (list.length() - 1 - i)
+                val h = hashIsi[i]
+                val peringkat = (i until list.length()).count { hashIsi[it] == h }
+                "tanpa-id-$h-$peringkat"
             } else {
                 idMentah
             }
