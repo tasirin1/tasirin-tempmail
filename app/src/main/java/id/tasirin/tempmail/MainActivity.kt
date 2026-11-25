@@ -555,7 +555,14 @@ class MainActivity : AppCompatActivity() {
         spinnerSiap = false
         sesuaikanPilihanDomain(alamat)
         spinnerSiap = siapSebelum
-        refreshInbox()
+        // Refresh langsung hanya saat layar aktif (issue #136):
+        // setEmail juga dipanggil penyelesaian latar (pembuatan
+        // alamat, rotasi alamat server) yang bisa mendarat saat
+        // layar terjeda — di sana pengambilan ditunda ke rantai
+        // poll onResume, selaras gerbang #126/#130. Panggilan dari
+        // onCreate (polling belum menyala) tertutup oleh onResume
+        // yang selalu menyusul dan langsung menyegarkan.
+        if (polling) refreshInbox()
     }
 
     // Ambil daftar inbox dari API di thread latar, lalu perbarui tampilan.
