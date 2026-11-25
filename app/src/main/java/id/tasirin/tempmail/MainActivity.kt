@@ -538,9 +538,18 @@ class MainActivity : AppCompatActivity() {
                     if (tuntas && gen == generasiAlamat) {
                         synchronized(idSudahDicek) {
                             idSudahDicek.add(kunci)
-                            // Jaga ukuran penanda: simpan 50 id terakhir saja.
-                            while (idSudahDicek.size > 50) {
-                                idSudahDicek.remove(idSudahDicek.first())
+                            // Jaga ukuran penanda (issue #66): batas 50
+                            // terlalu kecil untuk inbox ramai — id lama
+                            // yang masih tampil terlempar lalu diperiksa
+                            // ulang dan menghabiskan kuota ambil isi.
+                            // Kini batas 200, dan yang dibuang lebih dulu
+                            // adalah id yang sudah tidak ada di daftar.
+                            if (idSudahDicek.size > 200) {
+                                val hidup = items.map { it.id }.toSet()
+                                idSudahDicek.removeAll { it !in hidup }
+                                while (idSudahDicek.size > 200) {
+                                    idSudahDicek.remove(idSudahDicek.first())
+                                }
                             }
                         }
                         if (kode != null && kodeBaru == null) kodeBaru = kode
