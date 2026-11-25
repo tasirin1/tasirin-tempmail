@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Collections
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -48,7 +49,15 @@ class MainActivity : AppCompatActivity() {
 
     // Id semua email yang isinya sudah tuntas diperiksa untuk kode
     // verifikasi. Semua email diperiksa, bukan cuma yang teratas (issue #2).
-    private val idSudahDicek = mutableSetOf<String>()
+    // Himpunan ini disentuh thread UI dan thread latar — wajib sinkron,
+    // dan penanda generasi memastikan hasil pengambilan untuk alamat lama
+    // tidak mencemari keadaan alamat baru (issue #7).
+    private val idSudahDicek = Collections.synchronizedSet(LinkedHashSet<String>())
+
+    @Volatile
+    private var generasiAlamat = 0
+
+    @Volatile
     private var inboxPernahDimuat = false
 
     private val dataInbox = ArrayList<HashMap<String, String>>()
@@ -163,11 +172,12 @@ class MainActivity : AppCompatActivity() {
 
     // Ganti alamat aktif: simpan, kosongkan tampilan, langsung cek inbox.
     private fun setEmail(alamat: String) {
+        generasiAlamat++
         alamatSekarang = alamat
         tvEmail.text = alamat
         getSharedPreferences("tempmail", Context.MODE_PRIVATE)
             .edit().putString("email", alamat).apply()
-        idSudahDicek.clear()
+        synchronized(idSudahDicek) { idSudahDicek.clear() }
         inboxPernahDimuat = false
         itemInbox = emptyList()
         dataInbox.clear()
@@ -181,6 +191,7 @@ class MainActivity : AppCompatActivity() {
     private fun refreshInbox() {
         if (!sedangCek.compareAndSet(false, true)) return
         val email = alamatSekarang
+        val gen = generasiAlamat
         executor.execute {
             try {
                 val items = TempMailApi.fetchInbox(email)
@@ -188,6 +199,7 @@ class MainActivity : AppCompatActivity() {
                 // Periksa SEMUA email yang belum tuntas dicek, bukan cuma yang
                 // teratas — email kode yang bukan teratas pun ketemu (issue #2).
                 for (m in items) {
+                    if (gen != generasiAlamat) break
                     if (m.id in idSudahDicek) continue
                     var kode = OtpExtractor.extract(m.subject)
                     var tuntas = kode != null
@@ -203,11 +215,15 @@ class MainActivity : AppCompatActivity() {
                             kode = null
                         }
                     }
-                    if (tuntas) {
-                        idSudahDicek.add(m.id)
-                        // Jaga ukuran penanda: simpan 50 id terakhir saja.
-                        while (idSudahDicek.size > 50) {
-                            idSudahDicek.remove(idSudahDicek.first())
+                    // Alamat berganti di tengah pengambilan: hasil ini basi,
+                    // jangan tandai apa pun untuk alamat baru (issue #7).
+                    if (tuntas && gen == generasiAlamat) {
+                        synchronized(idSudahDicek) {
+                            idSudahDicek.add(m.id)
+                            // Jaga ukuran penanda: simpan 50 id terakhir saja.
+                            while (idSudahDicek.size > 50) {
+                                idSudahDicek.remove(idSudahDicek.first())
+                            }
                         }
                         if (kode != null && kodeBaru == null) kodeBaru = kode
                     }
