@@ -33,7 +33,16 @@ class HttpSesi {
 
     private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
 
+    // Satu permintaan pada satu waktu per sesi: baca-kuki dan
+    // simpan-kuki menjadi satu rangkaian atomik, jadi dua permintaan
+    // paralel tidak bisa membuat toples kuki mundur versi (issue #58).
+    private val kunciPermintaan = Any()
+
     private fun kirim(metode: String, url: String, body: String?, tipeIsi: String?, headerTambahan: Map<String, String>): HasilHttp {
+        return synchronized(kunciPermintaan) { kirimSekali(metode, url, body, tipeIsi, headerTambahan) }
+    }
+
+    private fun kirimSekali(metode: String, url: String, body: String?, tipeIsi: String?, headerTambahan: Map<String, String>): HasilHttp {
         val conn = URL(url).openConnection() as HttpURLConnection
         try {
             conn.requestMethod = metode
