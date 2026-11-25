@@ -193,15 +193,20 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnGanti).setOnClickListener {
             // Pembuatan alamat bisa lewat jaringan (layanan berbasis
             // sesi) — selalu lewat thread latar.
-            buatAlamatBaru(acak = true, pesanSalin = "Email baru tersalin")
+            if (!buatAlamatBaru(acak = true, pesanSalin = "Email baru tersalin")) {
+                toast("Sedang membuat alamat…")
+            }
         }
         findViewById<Button>(R.id.btnPakai).setOnClickListener {
             val bersih = AddressGenerator.sanitizeLocalPart(etNama.text.toString())
             if (bersih.isEmpty()) {
                 toast("Nama tidak sah")
-            } else {
+            } else if (buatAlamatBaru(acak = false, namaBersih = bersih, pesanSalin = "Email tersalin")) {
+                // Nama hanya dibersihkan bila permintaan benar-benar
+                // jalan — ditelan penjaga = nama tetap utuh (issue #84).
                 etNama.text.clear()
-                buatAlamatBaru(acak = false, namaBersih = bersih, pesanSalin = "Email tersalin")
+            } else {
+                toast("Sedang membuat alamat…")
             }
         }
         findViewById<Button>(R.id.btnSalinKode).setOnClickListener {
@@ -353,9 +358,12 @@ class MainActivity : AppCompatActivity() {
 
     // Buat alamat (acak/custom) di thread latar — layanan berbasis sesi
     // butuh jaringan. Hasil basi (sudah ada permintaan lebih baru atau
-    // layanan berganti) dibuang.
-    private fun buatAlamatBaru(acak: Boolean, namaBersih: String? = null, pesanSalin: String?) {
-        if (sedangBuat) return
+    // layanan berganti) dibuang. Mengembalikan false bila permintaan
+    // ditolak penjaga (pembuatan lain sedang berjalan) supaya pemanggil
+    // bisa memberi umpan balik — penolakan diam-diam membuat ketukan
+    // Pakai menelan nama yang diketik pengguna (issue #84).
+    private fun buatAlamatBaru(acak: Boolean, namaBersih: String? = null, pesanSalin: String?): Boolean {
+        if (sedangBuat) return false
         sedangBuat = true
         val token = ++tokenBuat
         val p = providerAktif
@@ -392,6 +400,7 @@ class MainActivity : AppCompatActivity() {
             // Activity sedang dihancurkan — abaikan dengan aman.
             if (token == tokenBuat) sedangBuat = false
         }
+        return true
     }
 
     override fun onResume() {
