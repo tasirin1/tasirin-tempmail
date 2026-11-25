@@ -4,6 +4,28 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-11-25
+
+### Added
+
+- Layanan keempat: **InboxKitten** (inboxkitten.com) — dipilih
+  owner dari saran yang diverifikasi langsung. API JSON tanpa
+  sesi dan tanpa kunci; alamat nama sendiri @inboxkitten.com
+  (satu domain); daftar inbox membawa kepala email Mailgun
+  (pengirim/subjek/waktu epoch), isi diambil per email lewat
+  getHtml dan dibersihkan dengan htmlToText yang sama seperti
+  jalur HTML tempmail.plus. Terbukti ujung-ke-ujung sebelum
+  dirilis: email uji berkode tiba, terbaca, dan kodenya
+  terdeteksi dari subjek maupun isi. Kandidat lain yang dicek
+  hari yang sama: tempmail.lol kini mewajibkan kunci akun,
+  mail.gw tidak terjangkau, 1secmail sudah mati.
+
+### Tests
+
+- KittenProviderTest baru: daftar domain, komposisi alamat
+  acak/custom, penolakan domain asing, dan format waktu dari
+  epoch detik (termasuk stempel email uji sungguhan).
+
 ## [0.8.10] - 2026-11-25
 
 Hasil Maraton-16 (Audit-16: 4 temuan, issue #153–#156 — semuanya
