@@ -79,8 +79,8 @@ object TempMailApi {
             // diambil tanpa id (#125). Kembar identik berbagi satu
             // penanda tanpa kehilangan apa pun; id kini stabil
             // terhadap SEMUA mutasi daftar.
-            // Sidiknya GANDA (issue #143): hashCode + panjang
-            // tripel — satu hashCode 32-bit saja bisa bertabrakan
+            // Sidiknya GANDA (issue #143): hashCode + FNV-1a +
+            // panjang tripel — satu hashCode 32-bit saja bisa bertabrakan
             // antar tripel BERBEDA (subjek "Aa" vs "BB") dan item
             // kedua lalu tak pernah dipindai fase-2. Komponen
             // keduanya FNV-1a (issue #148): dua hashCode polinomial
@@ -188,7 +188,7 @@ object TempMailApi {
     // FNV-1a 32-bit atas teks UTF-8 — komponen sidik kedua yang
     // strukturnya berbeda dari hashCode polinomial (issue #148).
     private fun fnv1a(teks: String): Int {
-        var h = -375076303 // 0x811C9DC5 sebagai Int bertanda
+        var h = -2128831035 // 0x811C9DC5 sebagai Int bertanda (issue #153)
         for (b in teks.toByteArray(Charsets.UTF_8)) {
             h = h xor (b.toInt() and 0xFF)
             h *= 16777619 // 0x01000193; luapan Int memang sifat FNV
