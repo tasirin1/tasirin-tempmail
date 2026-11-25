@@ -131,6 +131,43 @@ object OtpExtractor {
         // kalimat kode pos tertelan penjaga.
         return !antara.any { it.isDigit() } &&
             polaPemicu.find(antara) == null &&
-            !antara.any { it == '.' || it == '!' || it == '?' || it == '\n' }
+            !adaPemutusIkatan(antara)
+    }
+
+    // Singkatan baku bertitik — titiknya BUKAN batas kalimat
+    // (issue #140: "Jl."/"hal."/"No." di antara frasa dan angka
+    // kemarin memutus ikatan label dan kode pos lolos sebagai OTP).
+    private val singkatanTitik = setOf(
+        "jl", "no", "hal", "dr", "drs", "h", "hj", "sdr", "sdri",
+        "prof", "ir", "ust"
+    )
+
+    // Ada batas kalimat sungguhan di teks ini? '!' dan '?' selalu
+    // batas; '.' hanya bila kata sebelumnya bukan singkatan baku
+    // dan bukan inisial satu huruf.
+    private fun adaBatasKalimat(teks: String): Boolean {
+        for (i in teks.indices) {
+            when (teks[i]) {
+                '!', '?' -> return true
+                '.' -> {
+                    val sb = StringBuilder()
+                    var j = i - 1
+                    while (j >= 0 && teks[j].isLetter()) {
+                        sb.append(teks[j])
+                        j--
+                    }
+                    val kata = sb.reverse().toString().lowercase()
+                    if (kata.isEmpty()) return true
+                    if (kata.length > 1 && kata !in singkatanTitik) return true
+                }
+            }
+        }
+        return false
+    }
+
+    // Pemutus ikatan label di jalur cadangan: batas kalimat, atau
+    // baris baru (sementara masih tanpa syarat — lihat #141).
+    private fun adaPemutusIkatan(antara: String): Boolean {
+        return adaBatasKalimat(antara) || '\n' in antara
     }
 }

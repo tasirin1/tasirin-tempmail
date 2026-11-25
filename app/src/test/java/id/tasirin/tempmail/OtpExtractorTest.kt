@@ -157,6 +157,15 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun titikSingkatanBukanBatasKalimat() {
+        // Issue #140: titik singkatan di antara frasa dan angka
+        // tidak memutus ikatan label.
+        assertNull(OtpExtractor.extract("Kode pos untuk Jl. Merdeka adalah 123456"))
+        assertNull(OtpExtractor.extract("Kode pos tertulis di hal. 123456"))
+        assertNull(OtpExtractor.extract("kode pos sesuai alamat No. 123 456"))
+    }
+
+    @Test
     fun batasKalimatMemutusIkatanLabel() {
         // Issue #138: frasa kode pos di kalimat sebelumnya tidak
         // menelan OTP tanpa pemicu di kalimat ini.
