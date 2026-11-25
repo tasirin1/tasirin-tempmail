@@ -87,6 +87,8 @@ class OtpExtractorTest {
         // Issue #71: potongan nomor telepon berformat 08xx-xxx-xxx
         // tidak boleh dibaca sebagai kode terpencar.
         assertNull(OtpExtractor.extract("Hubungi kami di 0812-345-678 untuk bantuan"))
+        // Issue #101: format spasi berkelompok 4-3-3 juga nomor telepon.
+        assertNull(OtpExtractor.extract("Hubungi 0812 345 678 untuk bantuan"))
         // Kode terpencar sungguhan tetap ketemu.
         assertEquals("123456", OtpExtractor.extract("Kode kamu: 123 456"))
         assertEquals("123456", OtpExtractor.extract("kode: 123-456"))
