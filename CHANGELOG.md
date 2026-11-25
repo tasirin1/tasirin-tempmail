@@ -4,6 +4,17 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.7.2] - 2026-11-25
+
+### Removed
+
+- Layanan tempmail.net dan tempail.com dicabut atas keputusan owner.
+  Gerbang bot Cloudflare keduanya tetap menolak aplikasi dari
+  perangkat (HTTP 403) walau header sudah disamarkan seperti
+  peramban di v0.7.1, dan email uji ke tempmail.net tidak pernah
+  tiba. Layanan yang tersisa: tempmail.plus, tempmail.is,
+  tempmail.now.
+
 ## [0.7.1] - 2026-11-25
 
 ### Fixed
