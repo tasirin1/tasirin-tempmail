@@ -28,11 +28,6 @@ object AddressGenerator {
         return sb.toString()
     }
 
-    // Alamat acak penuh: nama acak + domain acak.
-    fun randomAddress(random: Random = Random.Default): String {
-        return randomLocalPart(random = random) + "@" + DOMAINS.random(random)
-    }
-
     // Bersihkan nama ketikan pengguna jadi nama lokal yang sah:
     // huruf kecil, hanya a-z 0-9 . _ -, titik ganda dirapatkan, tanpa
     // pemisah di ujung, dan maksimal 64 karakter (batas bagian lokal

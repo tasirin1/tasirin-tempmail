@@ -18,7 +18,10 @@ class AddressGeneratorTest {
 
     @Test
     fun alamatAcakMemakaiDomainResmi() {
-        val alamat = AddressGenerator.randomAddress(Random(7))
+        // Susunan yang sama seperti PlusProvider.alamatAcak (randomAddress
+        // yang mati sudah dihapus — issue #72).
+        val alamat = AddressGenerator.randomLocalPart(random = Random(7)) +
+            "@" + AddressGenerator.DOMAINS.random(Random(7))
         assertTrue(alamat.substringAfter("@") in AddressGenerator.DOMAINS)
     }
 
