@@ -148,6 +148,9 @@ class OtpExtractorTest {
         // alamat — jangan tampil sebagai kode verifikasi.
         assertNull(OtpExtractor.extract("Kode posku: 40115"))
         assertNull(OtpExtractor.extract("kode posmu 40115"))
+        // Issue #127: -kau/-anda menempel juga.
+        assertNull(OtpExtractor.extract("kode poskau 40115"))
+        assertNull(OtpExtractor.extract("kode posanda 40115"))
     }
 
     @Test
