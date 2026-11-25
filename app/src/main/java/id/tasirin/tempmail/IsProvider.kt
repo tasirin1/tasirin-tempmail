@@ -51,6 +51,10 @@ class IsProvider : MailProvider {
     // email tiap putaran (issue #39).
     private var idTerbesar: Long = 0
     private val daftarPesan = ArrayList<MailItem>()
+    // Himpunan id yang sudah ada di daftarPesan — dedupe O(1); pola
+    // none{} lama membuat penggabungan makin lambat kuadratik, dan
+    // daftar hanya tumbuh tanpa batas (issue #86).
+    private val idDikenal = HashSet<String>()
 
     private fun post(rute: String, kolom: List<Pair<String, String>>): JSONObject {
         val hasil = http.postForm("$BASE$rute", kolom)
@@ -87,6 +91,7 @@ class IsProvider : MailProvider {
         // Alamat berganti = kotak masuk berganti: delta mulai dari nol.
         idTerbesar = 0
         daftarPesan.clear()
+        idDikenal.clear()
         isiTerakhir.kosongkan()
         return alamatAktif
     }
@@ -148,6 +153,7 @@ class IsProvider : MailProvider {
         alamatAktif = ""
         idTerbesar = 0
         daftarPesan.clear()
+        idDikenal.clear()
         isiTerakhir.kosongkan()
     }
 
@@ -204,6 +210,7 @@ class IsProvider : MailProvider {
         val baru = ArrayList<MailItem>()
         val isiBaru = ArrayList<Pair<String, MailDetail>>()
         var kursorBaru = idTerbesar
+        val dikenalBatch = HashSet(idDikenal)
         for (i in 0 until (arr?.length() ?: 0)) {
             val m = arr!!.getJSONObject(i)
             val idPesan = m.optLong("id").toString()
@@ -221,7 +228,7 @@ class IsProvider : MailProvider {
             val waktu = waktuLokal(m.optString("created_at"))
             val idNum = m.optLong("id")
             if (idNum > kursorBaru) kursorBaru = idNum
-            if (daftarPesan.none { it.id == idPesan } && baru.none { it.id == idPesan }) {
+            if (dikenalBatch.add(idPesan)) {
                 baru.add(MailItem(id = idPesan, from = dari, subject = subjek, time = waktu))
             }
             isiBaru.add(
@@ -235,9 +242,20 @@ class IsProvider : MailProvider {
         }
         // Batch utuh teruraikan — terapkan keadaan bersama sekarang.
         idTerbesar = kursorBaru
+        idDikenal.clear()
+        idDikenal.addAll(dikenalBatch)
         for ((idPesan, detail) in isiBaru) isiTerakhir.taruh(idPesan, detail)
         // Pesan baru dari server selalu lebih baru dari yang sudah ada.
         daftarPesan.addAll(0, baru)
+        // Pangkas ekor (terlama): daftar delta tidak boleh tumbuh tanpa
+        // batas selama alamat hidup (issue #86). Pesan terpangkas tidak
+        // diminta ulang (kursor sudah lewat) — batas 100 jauh di atas
+        // pemakaian email sekali pakai yang wajar.
+        while (daftarPesan.size > BATAS_DAFTAR) {
+            val terbuang = daftarPesan.removeAt(daftarPesan.lastIndex)
+            idDikenal.remove(terbuang.id)
+            isiTerakhir.buang(terbuang.id)
+        }
         return ArrayList(daftarPesan)
     }
 
@@ -271,6 +289,8 @@ class IsProvider : MailProvider {
     }
 
     companion object {
+        // Batas panjang daftar gabungan delta (issue #86).
+        private const val BATAS_DAFTAR = 100
         private const val BASE = "https://api.tempamail.com/webapp"
         // UUID aplikasi web tempmail.is — terbaca dari konfigurasi publik
         // situsnya sendiri, sama seperti yang dipakai peramban pengunjung.

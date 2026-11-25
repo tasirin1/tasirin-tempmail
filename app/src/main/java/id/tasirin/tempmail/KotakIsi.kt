@@ -24,6 +24,11 @@ class KotakIsi {
         synchronized(this) { peta = peta + (id to detail) }
     }
 
+    // Buang satu entri (pemangkasan daftar delta — issue #86).
+    fun buang(id: String) {
+        synchronized(this) { peta = peta - id }
+    }
+
     fun kosongkan() {
         peta = emptyMap()
     }
