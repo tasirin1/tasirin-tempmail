@@ -1,6 +1,9 @@
 package id.tasirin.tempmail
 
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 // Layanan tempmail.is — API JSON di api.tempamail.com (terverifikasi
 // langsung 2026-11-25). Berbasis "klien": satu uuid klien memiliki
@@ -159,7 +162,7 @@ class IsProvider : MailProvider {
                 // Biarkan apa adanya bila bukan JSON.
             }
             val subjek = m.optString("subject")
-            val waktu = m.optString("created_at").replace("T", " ").take(16)
+            val waktu = waktuLokal(m.optString("created_at"))
             val idNum = m.optLong("id")
             if (idNum > idTerbesar) idTerbesar = idNum
             if (daftarPesan.none { it.id == idPesan }) {
@@ -189,6 +192,20 @@ class IsProvider : MailProvider {
         fetchInbox(alamat)
         return isiTerakhir[item.id]
             ?: throw IllegalStateException("Email tidak ditemukan (mungkin sudah terhapus)")
+    }
+
+    // created_at dari server adalah UTC (akhiran Z) — tampilkan dalam
+    // zona waktu perangkat pengguna, bukan UTC mentah (issue #54).
+    // Gagal urai: kembalikan potongan mentah seperti perilaku lama.
+    private fun waktuLokal(mentah: String): String {
+        return try {
+            val masuk = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+            masuk.timeZone = TimeZone.getTimeZone("UTC")
+            val tanggal = masuk.parse(mentah.take(19)) ?: return mentah.replace("T", " ").take(16)
+            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(tanggal)
+        } catch (e: Exception) {
+            mentah.replace("T", " ").take(16)
+        }
     }
 
     companion object {
