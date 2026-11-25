@@ -171,6 +171,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         polling = true
+        // Cabut dulu supaya tidak pernah ada dua rantai polling (issue #31).
+        handler.removeCallbacks(pollRunnable)
         handler.post(pollRunnable)
     }
 
