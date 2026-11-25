@@ -10,6 +10,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Push beruntun membatalkan run lama yang sudah basi (issue #75).
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: "Build APK + unit test"
@@ -41,3 +46,5 @@ jobs:
         with:
           name: tasirin-tempmail-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          # Artefak debug tidak perlu disimpan 90 hari (issue #75).
+          retention-days: 7
