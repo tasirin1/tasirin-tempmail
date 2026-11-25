@@ -60,16 +60,6 @@ object TempMailApi {
             throw IllegalStateException("tempmail.plus menolak permintaan ini")
         }
         val list = json.optJSONArray("mail_list") ?: return emptyList()
-        // Sidik isi tiap elemen, untuk id sintetis di bawah.
-        val hashIsi = IntArray(list.length()) { j ->
-            val e = list.optJSONObject(j)
-            if (e == null) {
-                0
-            } else {
-                (e.optString("from_mail") + "|" + e.optString("subject") + "|" +
-                    e.optString("time")).hashCode()
-            }
-        }
         val hasil = ArrayList<MailItem>()
         for (i in 0 until list.length()) {
             val m = list.optJSONObject(i) ?: continue
@@ -79,19 +69,19 @@ object TempMailApi {
             // Item tanpa mail_id TIDAK boleh berbagi id "" bersama
             // (detail membuka email yang salah, penanda UI bertabrakan)
             // — pakai kunci sidik isi, pola #42/#111 (issue #120).
-            // Email kembar (sidik sama) dibedakan PERINGKAT di antara
-            // sesama kembar dari segmen ekor (issue #125, #129, #135):
-            // posisi daftar terbukti bukan identitas — indeks kepala
-            // bergeser tiap email baru (#129), indeks ekor bergeser
-            // saat jendela 20 item meluncur atau item ekor terhapus
-            // (#135). Peringkat kembar stabil terhadap semua mutasi
-            // itu; item tanpa-id TUNGGAL (kasus umum) selalu
-            // berperingkat 1, apa pun yang terjadi pada daftar.
+            // Id sintetis = sidik isi SAJA (issue #139): pembeda
+            // posisi/peringkat kembar sudah dicoba tiga kali dan
+            // selalu bergeser pada mutasi daftar tertentu (#125,
+            // #129, #135) — dua email bertripel identik memang tidak
+            // bisa dibedakan secara stabil, dan tidak perlu: kode
+            // untuk item tanpa-id hanya berasal dari SUBJEK (bagian
+            // dari sidik itu sendiri), dan isinya memang tidak bisa
+            // diambil tanpa id (#125). Kembar identik berbagi satu
+            // penanda tanpa kehilangan apa pun; id kini stabil
+            // terhadap SEMUA mutasi daftar.
             val idMentah = idString(m.opt("mail_id"))
             val idPesan = if (idMentah.isBlank()) {
-                val h = hashIsi[i]
-                val peringkat = (i until list.length()).count { hashIsi[it] == h }
-                "tanpa-id-$h-$peringkat"
+                "tanpa-id-" + (dari + "|" + subjek + "|" + waktu).hashCode()
             } else {
                 idMentah
             }
