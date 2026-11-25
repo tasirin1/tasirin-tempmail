@@ -209,7 +209,14 @@ class NowProvider : MailProvider {
         val hasilList = ArrayList<MailItem>()
         val isiBaru = HashMap<String, MailDetail>()
         for (i in 0 until (arr?.length() ?: 0)) {
-            val m = arr!!.getJSONObject(i)
+            // Satu elemen bukan objek dilewati saja: pengambilan .now
+            // bersifat daftar-penuh, elemen lain tetap sehat — jangan
+            // gagalkan seluruh inbox berulang tiap polling (issue #109).
+            val m = try {
+                arr!!.getJSONObject(i)
+            } catch (e: Exception) {
+                continue
+            }
             val dari = m.optString("from_address")
             val subjek = m.optString("subject")
             // Item tanpa id TIDAK boleh berbagi kunci cache yang sama
