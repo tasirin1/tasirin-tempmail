@@ -78,11 +78,32 @@ class NowProvider : MailProvider {
             alamatAktif
         } else {
             // Sudah punya sesi: ganti alamat lewat endpoint resmi situsnya.
-            val hasil = http.postForm(
+            var hasil = http.postForm(
                 "$BASE/change_email",
                 emptyList(),
                 mapOf("X-CSRF-Token" to csrf)
             )
+            if (hasil.kode == 403) {
+                // Token CSRF mungkin sudah diputar server (issue #56):
+                // segarkan dari endpoint sesi lalu coba sekali lagi.
+                val segar = http.get("$BASE/api/temp_email")
+                if (segar.kode in 200..299) {
+                    val jsonSegar = uraiJson(segar.body)
+                    csrf = jsonSegar.optString("csrf_token", csrf)
+                    val emailSegar = jsonSegar.optString("email")
+                    if (emailSegar.isNotBlank() && emailSegar != alamatAktif) {
+                        // Sesi ternyata sudah berganti alamat di server.
+                        alamatAktif = emailSegar
+                        alamatDariServer = emailSegar
+                        return@synchronized alamatAktif
+                    }
+                    hasil = http.postForm(
+                        "$BASE/change_email",
+                        emptyList(),
+                        mapOf("X-CSRF-Token" to csrf)
+                    )
+                }
+            }
             if (hasil.kode in 200..299) {
                 val json = uraiJson(hasil.body)
                 alamatAktif = json.getString("new_email")
