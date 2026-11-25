@@ -280,6 +280,22 @@ class MainActivity : AppCompatActivity() {
     // Ganti layanan aktif: simpan pilihan, sesuaikan tampilan, lalu
     // pakai alamat sesi yang masih hidup atau buat alamat baru.
     private fun gantiLayanan(p: MailProvider) {
+        // Putuskan pasangan provider+alamat LAMA lebih dulu (issue #46):
+        // naikkan generasi alamat (hasil refresh yang sedang terbang
+        // gugur) dan kosongkan alamat aktif, supaya tidak ada polling
+        // yang memasangkan provider baru dengan alamat lama — inbox dan
+        // OTP layanan baru tidak boleh tampil/ tersalin di bawah alamat
+        // lama.
+        generasiAlamat++
+        alamatSekarang = ""
+        synchronized(idSudahDicek) { idSudahDicek.clear() }
+        synchronized(gagalAmbilIsi) { gagalAmbilIsi.clear() }
+        sapuAwalSelesai = false
+        itemInbox = emptyList()
+        dataInbox.clear()
+        adapterInbox.notifyDataSetChanged()
+        tvKosong.visibility = View.VISIBLE
+        sembunyikanKode()
         providerAktif = p
         generasiBuat++
         getSharedPreferences("tempmail", Context.MODE_PRIVATE)
@@ -400,7 +416,7 @@ class MainActivity : AppCompatActivity() {
                 // Fase 1: tampilkan daftar SEGERA — jangan menunggu pemindaian
                 // isi email yang bisa lama (issue #25).
                 runOnUiThread {
-                    if (email != alamatSekarang) return@runOnUiThread
+                    if (email != alamatSekarang || p !== providerAktif) return@runOnUiThread
                     jedaPollingMs = 8000L
                     // Daftar hanya dibangun ulang bila isinya benar-benar
                     // berubah — mayoritas polling isinya sama (issue #20).
@@ -491,7 +507,7 @@ class MainActivity : AppCompatActivity() {
                 val kodeFinal = kodeBaru
                 runOnUiThread {
                     sedangCek.set(false)
-                    if (email != alamatSekarang) return@runOnUiThread
+                    if (email != alamatSekarang || p !== providerAktif) return@runOnUiThread
                     // Server melaporkan alamat lain (mis. alamat lama
                     // kedaluwarsa dan diputar server): ikuti server.
                     val alamatServer = p.alamatServer()
