@@ -123,6 +123,13 @@ class OtpExtractorTest {
     }
 
     @Test
+    fun kataBerakhiranZipBukanKodePos() {
+        // Issue #117: "unzip" tepat sebelum kata "code" bukan penanda
+        // kode pos — kode konteksnya tetap terdeteksi.
+        assertEquals("4455", OtpExtractor.extract("Unzip code: 4455"))
+    }
+
+    @Test
     fun kodePosnyaDenganSufiksNyaDilewati() {
         // Issue #116: frasa alamat "kode posnya …" jangan tampil
         // sebagai kode verifikasi.

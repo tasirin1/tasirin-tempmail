@@ -37,7 +37,10 @@ object OtpExtractor {
     private val polaKodePos = Regex("""(?i)kode[\s-]*pos(?:nya)?\b""")
     // Padanan Inggrisnya: "ZIP code" / "postal code" (issue #100).
     private val polaKodePosInggris = Regex("""(?i)\b(?:zip|postal)[\s-]*code\b""")
-    private val polaEkorInggris = Regex("""(?i)(?:zip|postal)[\s-]*$""")
+    // \b di depan wajib: tanpa itu kata berakhiran "zip" (unzip,
+    // gzip) tepat sebelum pemicu ikut menolak kode yang sah
+    // (issue #117).
+    private val polaEkorInggris = Regex("""(?i)\b(?:zip|postal)[\s-]*$""")
     private val polaPemicu = Regex("""(?i)\b(?:kode|code|otp|verifikasi|verification|passcode|pin)\b""")
 
     // Benarkah angka pada kecocokan konteks ini milik frasa kode pos?
