@@ -29,7 +29,8 @@ object TempMailApi {
             conn.requestMethod = "GET"
             conn.connectTimeout = 15000
             conn.readTimeout = 15000
-            conn.setRequestProperty("User-Agent", "TasirinTempMail/0.1.0 (Android)")
+            // Versi diambil dari BuildConfig — tidak basi lagi (issue #18).
+            conn.setRequestProperty("User-Agent", "TasirinTempMail/${BuildConfig.VERSION_NAME} (Android)")
             conn.setRequestProperty("Accept", "application/json")
             val code = conn.responseCode
             val stream = if (code in 200..299) conn.inputStream else conn.errorStream
