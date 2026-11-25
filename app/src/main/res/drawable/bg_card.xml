@@ -2,9 +2,9 @@
 <!-- Kartu putih sudut membulat dengan garis tepi biru pucat. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#FFFFFF" />
+    <solid android:color="@color/putih" />
     <corners android:radius="14dp" />
     <stroke
         android:width="1dp"
-        android:color="#D7E5F6" />
+        android:color="@color/garis" />
 </shape>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Tema terang biru-putih, seragam Download Manager dan VPN Rotasi. -->
+    <color name="biru_terang">#1E88E5</color>
     <color name="biru_utama">#1565C0</color>
     <color name="biru_gelap">#0D47A1</color>
     <color name="biru_muda">#E3F2FD</color>
