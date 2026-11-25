@@ -4,6 +4,14 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-11-25
+
+### Added
+
+- Kode verifikasi yang BARU tiba langsung tersalin otomatis ke clipboard
+  (toast "Kode tiba & tersalin") — tinggal tempel, tanpa ketuk apa pun.
+  Kode lama yang baru terbaca saat aplikasi dibuka tidak ikut tersalin.
+
 ## [0.1.1] - 2026-11-25
 
 ### Changed

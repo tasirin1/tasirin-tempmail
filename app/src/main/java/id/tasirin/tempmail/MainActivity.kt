@@ -218,7 +218,14 @@ class MainActivity : AppCompatActivity() {
                     inboxPernahDimuat = true
                     if (kodeFinal != null) {
                         tampilkanKode(kodeFinal)
-                        if (pernahDimuat) toast("Kode verifikasi tiba: $kodeFinal")
+                        if (pernahDimuat) {
+                            // Kode BARU tiba: langsung salin supaya tinggal tempel.
+                            // (Hanya saat aplikasi terbuka — Android memblokir
+                            // tulisan clipboard dari aplikasi latar.)
+                            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            cm.setPrimaryClip(ClipData.newPlainText("kode verifikasi", kodeFinal))
+                            toast("Kode tiba & tersalin: $kodeFinal")
+                        }
                     }
                 }
             } catch (e: Exception) {
