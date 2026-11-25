@@ -204,17 +204,28 @@ object OtpExtractor {
         return false
     }
 
+    // Kata penghubung pembuka baris nilai — kelanjutan label,
+    // bukan kalimat baru (issue #152).
+    private val penghubungBaris = setOf("adalah", "is", "ialah")
+
     // Pemutus ikatan label: batas kalimat, atau baris baru yang
     // dikelilingi kata nyata — huruf sebelum baris baru pertama
     // (kalimat berakhir tanpa titik) ATAU huruf sesudahnya
     // (kalimat baru dimulai; issue #147). Baris baru yang hanya
     // dikelilingi tanda/label dan angka ("Postal code:\n123456")
-    // adalah pemisah label-nilai, BUKAN pemutus (issue #141).
+    // adalah pemisah label-nilai, BUKAN pemutus (issue #141);
+    // kata penghubung tunggal sesudah baris baru ("Kode pos:\n
+    // adalah 123456") juga kelanjutan label (issue #152).
     private fun adaPemutusIkatan(antara: String): Boolean {
         if (adaBatasKalimat(antara)) return true
         val idx = antara.indexOf('\n')
         if (idx < 0) return false
-        return antara.substring(0, idx).any { it.isLetter() } ||
-            antara.substring(idx + 1).any { it.isLetter() }
+        if (antara.substring(0, idx).any { it.isLetter() }) return true
+        var sesudah = antara.substring(idx + 1).trim()
+        val kataPertama = sesudah.takeWhile { it.isLetter() }.lowercase()
+        if (kataPertama in penghubungBaris) {
+            sesudah = sesudah.substring(kataPertama.length).trim()
+        }
+        return sesudah.any { it.isLetter() }
     }
 }

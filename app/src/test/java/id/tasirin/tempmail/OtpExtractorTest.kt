@@ -198,6 +198,10 @@ class OtpExtractorTest {
             "445566",
             OtpExtractor.extract("Kode pos:\nGunakan 445566 untuk masuk")
         )
+        // Issue #152: kata penghubung tunggal sesudah baris baru
+        // adalah kelanjutan label, bukan kalimat baru.
+        assertNull(OtpExtractor.extract("Kode pos:\n adalah 123456"))
+        assertNull(OtpExtractor.extract("ZIP code:\n is 123456"))
     }
 
     @Test
