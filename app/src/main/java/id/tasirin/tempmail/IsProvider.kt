@@ -78,14 +78,31 @@ class IsProvider : MailProvider {
         // Uraikan SEMUA kolom dulu, tetapkan keadaan sesudahnya: respons
         // sukses-sebagian tidak boleh meninggalkan uuid terisi dengan
         // id email 0 dan alamat kosong permanen (issue #38).
-        val uuidBaru = json.getJSONObject("client").getString("uuid")
-        catatEmail(json.getJSONObject("email"))
+        // Kolom wajib yang hilang/rusak jangan bocor sebagai
+        // JSONException mentah (issue #88).
+        val uuidBaru: String
+        val emailJson: JSONObject
+        try {
+            uuidBaru = json.getJSONObject("client").getString("uuid")
+            emailJson = json.getJSONObject("email")
+        } catch (e: Exception) {
+            throw IllegalStateException("tempmail.is: respons tidak lengkap dari server")
+        }
+        catatEmail(emailJson)
         uuidKlien = uuidBaru
     }
 
     private fun catatEmail(email: JSONObject): String {
-        val idBaru = email.getLong("id")
-        val alamatBaru = email.getString("address")
+        val idBaru = try {
+            email.getLong("id")
+        } catch (e: Exception) {
+            throw IllegalStateException("tempmail.is: respons tidak lengkap dari server")
+        }
+        val alamatBaru = try {
+            email.getString("address")
+        } catch (e: Exception) {
+            throw IllegalStateException("tempmail.is: respons tidak lengkap dari server")
+        }
         idEmailAktif = idBaru
         alamatAktif = alamatBaru
         // Alamat berganti = kotak masuk berganti: delta mulai dari nol.

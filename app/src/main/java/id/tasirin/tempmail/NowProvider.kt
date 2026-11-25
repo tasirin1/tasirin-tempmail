@@ -52,7 +52,13 @@ class NowProvider : MailProvider {
         val hasil = http.get("$BASE/api/temp_email")
         if (hasil.kode !in 200..299) throw IllegalStateException("tempmail.now: HTTP ${hasil.kode}")
         val json = uraiJson(hasil.body)
-        alamatAktif = json.getString("email")
+        // Kolom wajib yang hilang jangan bocor sebagai JSONException
+        // mentah (issue #88).
+        alamatAktif = try {
+            json.getString("email")
+        } catch (e: Exception) {
+            throw IllegalStateException("tempmail.now: respons tidak lengkap dari server")
+        }
         csrf = json.optString("csrf_token")
     }
 
@@ -104,7 +110,11 @@ class NowProvider : MailProvider {
             }
             if (hasil.kode in 200..299) {
                 val json = uraiJson(hasil.body)
-                alamatAktif = json.getString("new_email")
+                alamatAktif = try {
+                    json.getString("new_email")
+                } catch (e: Exception) {
+                    throw IllegalStateException("tempmail.now: respons tidak lengkap dari server")
+                }
                 alamatDariServer = null
                 alamatAktif
             } else {

@@ -35,7 +35,13 @@ object TempMailApi {
     private fun getJson(url: String): JSONObject {
         val hasil = HttpSesi().get(url)
         if (hasil.kode !in 200..299) throw IllegalStateException("HTTP ${hasil.kode}")
-        return JSONObject(hasil.body)
+        // Body kosong/HTML berstatus 200 tidak boleh bocor sebagai
+        // JSONException mentah ke pengguna (issue #88).
+        return try {
+            JSONObject(hasil.body)
+        } catch (e: Exception) {
+            throw IllegalStateException("tempmail.plus: respons bukan JSON (mungkin halaman perantara)")
+        }
     }
 
     // mail_id bisa berupa angka atau teks di JSON — samakan jadi String.
