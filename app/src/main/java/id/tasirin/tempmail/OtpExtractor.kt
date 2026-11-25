@@ -10,7 +10,9 @@ object OtpExtractor {
     )
 
     // 2) Kode tertulis terpencar: "123 456" atau "123-456".
-    private val polaTerpencar = Regex("""\b(\d{3})[\s-](\d{3})\b""")
+    // Penjaga tepi (?<![\d-]) / (?![\d-]): potongan nomor telepon
+    // seperti "0812-345-678" TIDAK boleh cocok di tengahnya (issue #71).
+    private val polaTerpencar = Regex("""(?<![\d-])(\d{3})[\s-](\d{3})(?![\d-])""")
 
     // 3) Angka 6 digit berdiri sendiri — bentuk OTP paling umum.
     private val pola6 = Regex("""\b(\d{6})\b""")
