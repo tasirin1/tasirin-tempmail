@@ -568,7 +568,15 @@ class MainActivity : AppCompatActivity() {
                             // Kini batas 200, dan yang dibuang lebih dulu
                             // adalah id yang sudah tidak ada di daftar.
                             if (idSudahDicek.size > 200) {
-                                val hidup = items.map { it.id }.toSet()
+                                // Himpunan hidup memakai KUNCI YANG SAMA
+                                // dengan penandaan: pola lama memakai id
+                                // mentah, jadi kunci gabungan email
+                                // tanpa-id tidak pernah cocok dan selalu
+                                // terbuang lebih dulu — termasuk yang
+                                // masih tampil (issue #93).
+                                val hidup = items.withIndex().map { (i, m) ->
+                                    if (m.id.isNotBlank()) m.id else kunciPerIndeks[i]!!
+                                }.toSet()
                                 idSudahDicek.removeAll { it !in hidup }
                                 while (idSudahDicek.size > 200) {
                                     idSudahDicek.remove(idSudahDicek.first())
