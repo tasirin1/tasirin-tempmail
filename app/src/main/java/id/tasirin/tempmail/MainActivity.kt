@@ -595,6 +595,11 @@ class MainActivity : AppCompatActivity() {
                     jedaPollingMs = (jedaPollingMs * 2).coerceAtMost(60000L)
                     tvStatus.text = "Gagal cek inbox: ${e.message ?: "jaringan bermasalah"}"
                 }
+            } catch (e: Throwable) {
+                // Error (bukan Exception — mis. kehabisan memori saat
+                // membaca respons raksasa) tidak boleh membuat penanda
+                // macet true dan polling mati diam-diam (issue #68).
+                runOnUiThread { sedangCek.set(false) }
             }
     }
 
@@ -653,6 +658,10 @@ class MainActivity : AppCompatActivity() {
                         toast("Gagal membuka: ${e.message ?: "jaringan bermasalah"}")
                     }
                 }
+            } catch (e: Throwable) {
+                // Sama seperti polling: penanda tidak boleh macet true
+                // oleh Error (issue #68).
+                runOnUiThread { sedangBuka.set(false) }
             }
     }
 
