@@ -52,19 +52,16 @@ jobs:
             VER="$APKVER"
           fi
           cp app/build/outputs/apk/release/app-release.apk "tasirin-tempmail-v${VER}.apk"
-          cat > /tmp/release-notes.md << 'EOF'
-          Rilis Tasirin TempMail — aplikasi Android email sekali pakai berbasis tempmail.plus, open source, kode orisinal.
-
-          Isi rilis ini:
-          - Alamat acak + Salin Email + Ganti Email (rotasi), 7 pilihan domain tempmail.plus, nama sendiri bisa diketik.
-          - Rotasi dan Pakai alamat baru langsung menyalinnya ke clipboard (sejak v0.1.1).
-          - Kotak masuk dicek otomatis tiap 8 detik selama aplikasi terbuka; ketuk email untuk membaca isinya.
-          - Kode verifikasi (OTP) terdeteksi otomatis dari judul/isi email, tampil besar + tombol Salin Kode; kode yang baru tiba langsung tersalin otomatis (v0.1.2).
-          - Tema terang biru-putih, UI Bahasa Indonesia.
-          - Logo amplop baru + tampilan kartu yang dipoles (v0.2.0).
-
-          Catatan: APK ditandatangani dengan kunci rilis proyek. Simpan APK ini baik-baik; rilis berikutnya memakai kunci yang sama supaya bisa memperbarui tanpa copot pasang.
-          EOF
+          # Catatan rilis diambil dari CHANGELOG bagian versi ini — tidak
+          # lagi teks statis yang basi (issue #32).
+          awk -v ver="$VER" '
+            $0 ~ "^## \\[" ver "\\]" {p=1; next}
+            /^## \[/ {if (p) exit}
+            p
+          ' CHANGELOG.md > /tmp/release-notes.md
+          if [ ! -s /tmp/release-notes.md ]; then
+            echo "Rilis Tasirin TempMail v${VER} — lihat CHANGELOG.md di repo untuk rincian perubahan." > /tmp/release-notes.md
+          fi
           gh release create "v${VER}" "tasirin-tempmail-v${VER}.apk" \
             --title "Tasirin TempMail v${VER}" \
             --notes-file /tmp/release-notes.md
