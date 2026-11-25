@@ -2,7 +2,6 @@ package id.tasirin.tempmail
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 // Uji logika murni OtpExtractor — nilai harapan ditulis dari bentuk
@@ -81,6 +80,5 @@ class OtpExtractorTest {
             "555777",
             OtpExtractor.extract("Order 998877 confirmed. Your verification code: 555777.")
         )
-        assertTrue(true)
     }
 }
