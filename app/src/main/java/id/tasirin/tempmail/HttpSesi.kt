@@ -65,10 +65,22 @@ class HttpSesi {
                 for ((nama, nilai) in ladang) {
                     if (nama != null && nama.equals("Set-Cookie", ignoreCase = true)) {
                         for (mentah in nilai) {
-                            val pasangan = mentah.substringBefore(";").trim()
+                            val bagian = mentah.split(";")
+                            val pasangan = bagian[0].trim()
                             val eq = pasangan.indexOf('=')
                             if (eq > 0) {
-                                kuki[pasangan.substring(0, eq).trim()] = pasangan.substring(eq + 1).trim()
+                                val namaKuki = pasangan.substring(0, eq).trim()
+                                val isiKuki = pasangan.substring(eq + 1).trim()
+                                // Hormati penghapusan dari server: nilai
+                                // kosong, Max-Age <= 0, atau Expires di
+                                // masa lalu (epoch) = kuki dibuang, bukan
+                                // disimpan dan dikirim selamanya (issue #45).
+                                val attrs = bagian.drop(1).joinToString(";").lowercase()
+                                val maxAge = reMaxAge.find(attrs)?.groupValues?.get(1)?.toLongOrNull()
+                                val mati = isiKuki.isEmpty() ||
+                                    (maxAge != null && maxAge <= 0) ||
+                                    attrs.contains("expires=thu, 01 jan 1970")
+                                if (mati) kuki.remove(namaKuki) else kuki[namaKuki] = isiKuki
                             }
                         }
                     }
@@ -97,6 +109,7 @@ class HttpSesi {
     }
 
     companion object {
+        private val reMaxAge = Regex("""max-age\s*=\s*(-?\d+)""")
         private const val BATAS_BODY = 2_000_000
         private const val UA_PERAMBAN =
             "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
