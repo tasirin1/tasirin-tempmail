@@ -127,10 +127,15 @@ class CatchmailProvider : MailProvider {
         // "yyyy-MM-dd HH:mm" zona waktu perangkat. internal supaya
         // terkunci tes unit. Nilai tidak sah menghasilkan teks kosong.
         internal fun waktuLokal(iso: String): String {
-            val t = iso.trim()
-            if (t.isEmpty()) return ""
+            val mentah = iso.trim()
+            if (mentah.isEmpty()) return ""
+            // API mengirim pecahan detik 6 digit (mikro); parser
+            // ketat menolaknya sebagai milidetik di luar rentang
+            // 0-999, jadi potong dulu ke 3 digit milidetik.
+            val t = Regex("""\.(\d+)""").replace(mentah) {
+                "." + it.groupValues[1].take(3).padEnd(3, '0')
+            }
             for (pola in arrayOf(
-                "yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX",
                 "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
                 "yyyy-MM-dd'T'HH:mm:ssXXX",
                 "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
