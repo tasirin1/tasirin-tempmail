@@ -4,6 +4,18 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.11.1] - 2026-11-28
+
+### Fixed
+
+- Waktu email Catchmail tampil kosong: API mengirim pecahan
+  detik 6 digit (mikro, mis. "...49.753000+00:00") yang ditolak
+  parser tanggal ketat sebagai milidetik di luar rentang 0-999,
+  sehingga seluruh penguraian waktu gagal. Pecahan kini dipotong
+  ke 3 digit milidetik sebelum diurai. Tag v0.11.0 gagal di CI
+  tepat pada tes kasus ini dan tidak pernah terbit — rilis ini
+  rilis pertama yang memuat layanan Catchmail.
+
 ## [0.11.0] - 2026-11-28
 
 ### Added
