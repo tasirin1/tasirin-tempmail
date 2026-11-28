@@ -4,6 +4,32 @@ Semua perubahan penting proyek ini dicatat di berkas ini.
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versi mengikuti [Semantic Versioning](https://semver.org/).
 
+## [0.11.0] - 2026-11-28
+
+### Added
+
+- Layanan ketujuh: **Catchmail** (catchmail.io) — dipilih owner
+  dari saran yang diverifikasi langsung (ketiga kandidat disetujui,
+  hanya Catchmail yang lolos bukti ujung-ke-ujung). API JSON tanpa
+  sesi dan tanpa kunci: daftar kotak masuk dan isi email (teks,
+  atau HTML yang diubah ke teks) lewat `api.catchmail.io/api/v1`.
+  Alamat nama sendiri di 3 domain: catchmail.io, mailistry.com,
+  zeppost.com. Pengirim berbentuk "<alamat>" dibersihkan ke alamat
+  polos, waktu ISO 8601 ditampilkan sebagai tanggal + jam lokal.
+- Kandidat lain yang disetujui owner tapi BELUM lolos bukti, jadi
+  belum dirilis: **inboxes.com** dan **mailforspam.com** — API
+  keduanya hidup dan inbox kosong terbaca, tetapi dua email uji
+  dari Gmail tidak pernah tiba sesudah 48 kali pengecekan selama
+  ±14 menit (tanpa pemberitahuan pantulan dari Gmail). Keduanya
+  dicatat sebagai kandidat tertunda, bukan layanan aktif.
+
+### Tests
+
+- CatchmailProviderTest baru: daftar domain, komposisi alamat
+  acak/custom + penolakan domain asing, pembersih pengirim kurung
+  sudut (contoh persis email uji sungguhan), dan format waktu ISO
+  berpecahan mikro (stempel persis email uji sungguhan).
+
 ## [0.10.2] - 2026-11-25
 
 ### Changed

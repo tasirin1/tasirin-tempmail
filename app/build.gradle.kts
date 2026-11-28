@@ -11,8 +11,8 @@ android {
         applicationId = "id.tasirin.tempmail"
         minSdk = 26
         targetSdk = 35
-        versionCode = 29
-        versionName = "0.10.2"
+        versionCode = 30
+        versionName = "0.11.0"
     }
 
     signingConfigs {
